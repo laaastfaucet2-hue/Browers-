@@ -1,0 +1,12 @@
+diff --git a/browser/app/profile/firefox.js b/browser/app/profile/firefox.js
+--- a/browser/app/profile/firefox.js
++++ b/browser/app/profile/firefox.js
+@@ -40,6 +40,11 @@ pref("toolkit.telemetry.enabled", false);
+ pref("toolkit.telemetry.unified", false);
+ pref("experiments.activeExperiment", false);
+ pref("experiments.supported", false);
++pref("extensions.pocket.enabled", false);
++pref("browser.newtabpage.activity-stream.feeds.telemetry", false);
++pref("browser.ping-centre.telemetry", false);
++pref("datareporting.healthreport.uploadEnabled", false);
++pref("network.http.referer.XOriginPolicy", 1);

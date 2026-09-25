@@ -1,0 +1,10 @@
+diff --git a/browser/branding/official/branding.nsi b/browser/branding/official/branding.nsi
+--- a/browser/branding/official/branding.nsi
++++ b/browser/branding/official/branding.nsi
+@@ -4,6 +4,6 @@
+-!define BrandFullNameInternal "Firefox"
+-!define BrandShortName        "Firefox"
++!define BrandFullNameInternal "AtlasBrowser"
++!define BrandShortName        "AtlasBrowser"
+-!define CompanyName           "Mozilla Corporation"
++!define CompanyName           "Atlas Project"

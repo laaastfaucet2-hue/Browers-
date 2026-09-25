@@ -1,0 +1,33 @@
+# Production gn build arguments for custom Chromium fork
+# Path: out/Default/args.gn
+
+is_debug = false
+is_official_build = true
+is_component_build = false
+symbol_level = 0
+blink_symbol_level = 0
+
+# Branding & Product info
+is_chrome_branded = false
+branding_path_component = "chromium"
+
+# Disable Google Telemetry, Sync, and proprietary tracking
+enable_google_now = false
+enable_hangout_services_extension = false
+enable_service_discovery = false
+enable_reporting = false
+google_api_key = "no"
+google_default_client_id = "no"
+google_default_client_secret = "no"
+
+# Privacy & Security tweaks
+safe_browsing_mode = 0
+enable_remoting = false
+
+# Media & Codecs (Enable H.264, AAC, MP3, etc.)
+proprietary_codecs = true
+ffmpeg_branding = "Chrome"
+
+# Performance optimizations
+use_thin_lto = true
+optimize_webui = true

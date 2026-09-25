@@ -1,0 +1,6 @@
+bin/
+*.o
+.DS_Store
+*.log
+browser_cache/
+build/

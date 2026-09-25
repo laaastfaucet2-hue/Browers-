@@ -1,0 +1,25 @@
+# Production mozconfig for custom Firefox/Gecko fork
+
+ac_add_options --enable-application=browser
+ac_add_options --enable-optimize="-O3"
+ac_add_options --disable-debug
+ac_add_options --enable-release
+
+# Branding
+ac_add_options --enable-official-branding
+ac_add_options --with-app-name=atlasbrowser
+ac_add_options --with-app-basename=AtlasBrowser
+
+# Privacy & Anti-Telemetry
+ac_add_options --disable-telemetry
+ac_add_options --disable-tests
+ac_add_options --disable-crashreporter
+ac_add_options --disable-updater
+ac_add_options --disable-pocket
+
+# Hardware Acceleration & Codecs
+ac_add_options --enable-ffmpeg
+ac_add_options --enable-webrtc
+
+# Rust & Compiler Flags
+export RUSTFLAGS="-C opt-level=3 -C target-cpu=native"

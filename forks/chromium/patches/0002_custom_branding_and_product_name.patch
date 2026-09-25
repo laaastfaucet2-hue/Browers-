@@ -1,0 +1,14 @@
+diff --git a/chrome/common/chrome_constants.cc b/chrome/common/chrome_constants.cc
+--- a/chrome/common/chrome_constants.cc
++++ b/chrome/common/chrome_constants.cc
+@@ -15,7 +15,7 @@ namespace chrome {
+ 
+-const char kBrowserAppName[] = "Chromium";
++const char kBrowserAppName[] = "AtlasBrowser";
+ 
+-const base::FilePath::CharType kBrowserProcessExecutableName[] =
+-    FILE_PATH_LITERAL("chrome");
++const base::FilePath::CharType kBrowserProcessExecutableName[] =
++    FILE_PATH_LITERAL("atlasbrowser");
+ 
+ }  // namespace chrome

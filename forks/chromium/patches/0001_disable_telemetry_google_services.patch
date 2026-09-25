@@ -1,0 +1,9 @@
+diff --git a/components/metrics/metrics_service.cc b/components/metrics/metrics_service.cc
+--- a/components/metrics/metrics_service.cc
++++ b/components/metrics/metrics_service.cc
+@@ -210,6 +210,9 @@ void MetricsService::Start() {
+   // Custom fork modification: permanently disable telemetry transmission
++  // Disables all reporting and background metric uploads to Google
++  state_ = STOPPED;
++  return;
+ }
