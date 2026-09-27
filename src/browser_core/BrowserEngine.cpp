@@ -19,6 +19,7 @@ void BrowserEngine::initialize() {
     m_jsBridge = std::make_shared<JsBridge>();
     m_storage = std::make_shared<BookmarkHistoryStore>();
     m_tabManager = std::make_shared<TabManager>();
+    m_containerManager = std::make_shared<ContainerManager>();
 
     setupInternalSchemes();
     setupJsBridgeApis();

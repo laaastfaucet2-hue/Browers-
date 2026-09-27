@@ -52,22 +52,63 @@ static const char* HTML_UI = R"RAW_HTML(<!DOCTYPE html>
             border-top-right-radius: 8px;
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 8px;
             font-size: 0.85rem;
             cursor: pointer;
             border: 1px solid transparent;
-            border-bottom: none;
-            max-width: 200px;
-            min-width: 120px;
+            border-bottom: 2px solid var(--container-color, transparent);
+            max-width: 220px;
+            min-width: 130px;
             transition: all 0.15s ease;
+            position: relative;
         }
         .tab:hover { background: #243248; color: var(--text-main); }
-        .tab.active { background: var(--bg-toolbar); color: var(--text-main); font-weight: 500; border-color: var(--border-color); }
+        .tab.active { background: var(--bg-toolbar); color: var(--text-main); font-weight: 500; border-color: var(--border-color); border-bottom: 3px solid var(--container-color, #38bdf8); }
         .tab-title { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1; }
+        .container-badge {
+            font-size: 0.65rem;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: bold;
+            background: var(--container-color);
+            color: #fff;
+            white-space: nowrap;
+        }
         .tab-close { opacity: 0.6; font-size: 1rem; border-radius: 50%; padding: 0 4px; }
         .tab-close:hover { opacity: 1; background: rgba(255,255,255,0.1); color: var(--danger); }
         .btn-new-tab { background: transparent; border: none; color: var(--text-muted); font-size: 1.2rem; cursor: pointer; padding: 4px 10px; border-radius: 6px; }
         .btn-new-tab:hover { background: var(--bg-toolbar); color: var(--text-main); }
+
+        .container-dropdown {
+            position: relative;
+            display: inline-block;
+        }
+        .container-menu {
+            display: none;
+            position: absolute;
+            left: 0;
+            top: 100%;
+            background: #1e293b;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            z-index: 1000;
+            min-width: 220px;
+            padding: 6px 0;
+        }
+        .container-menu.show { display: block; }
+        .container-option {
+            padding: 8px 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--text-main);
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+        .container-option:hover { background: #334155; }
+        .c-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
 
         /* Toolbar */
         .toolbar {
@@ -190,7 +231,17 @@ static const char* HTML_UI = R"RAW_HTML(<!DOCTYPE html>
             <span class="dot green"></span>
         </div>
         <div class="tabs-container" id="tabsList"></div>
-        <button class="btn-new-tab" onclick="createNewTab()" title="فتح لسان جديد">+</button>
+        <button class="btn-new-tab" onclick="createNewTab(0)" title="فتح لسان عادي">+</button>
+        <div class="container-dropdown">
+            <button class="btn-new-tab" onclick="toggleContainerMenu()" title="فتح لسان في حاوية Firefox Container">🛡️ الحاويات ▼</button>
+            <div class="container-menu" id="containerMenu">
+                <div style="padding: 6px 16px; font-size: 0.75rem; color: #94a3b8; font-weight: bold;">اختر حاوية معزولة (Multi-Container):</div>
+                <div class="container-option" onclick="createNewTab(1)"><span class="c-dot" style="background:#38bdf8;"></span> لسان شخصي (Personal)</div>
+                <div class="container-option" onclick="createNewTab(2)"><span class="c-dot" style="background:#fb923c;"></span> لسان العمل (Work)</div>
+                <div class="container-option" onclick="createNewTab(3)"><span class="c-dot" style="background:#4ade80;"></span> لسان بنكي (Banking)</div>
+                <div class="container-option" onclick="createNewTab(4)"><span class="c-dot" style="background:#f472b6;"></span> لسان التسوق (Shopping)</div>
+            </div>
+        </div>
     </div>
 
     <!-- Toolbar -->
@@ -242,14 +293,33 @@ static const char* HTML_UI = R"RAW_HTML(<!DOCTYPE html>
             setTimeout(() => { toast.style.display = 'none'; }, 3500);
         }
 
+        function toggleContainerMenu() {
+            document.getElementById('containerMenu').classList.toggle('show');
+        }
+
+        window.onclick = function(e) {
+            if (!e.target.matches('.container-dropdown *')) {
+                const menu = document.getElementById('containerMenu');
+                if (menu && menu.classList.contains('show')) menu.classList.remove('show');
+            }
+        };
+
         function renderUI() {
             const tabsList = document.getElementById('tabsList');
             tabsList.innerHTML = '';
             currentState.tabs.forEach(tab => {
                 const tabEl = document.createElement('div');
                 tabEl.className = 'tab' + (tab.id === currentState.activeTabId ? ' active' : '');
+                tabEl.style.setProperty('--container-color', tab.containerColor || '#94a3b8');
                 tabEl.onclick = () => switchTab(tab.id);
+
+                let badgeHtml = '';
+                if (tab.containerId > 0) {
+                    badgeHtml = `<span class="container-badge" style="background:${tab.containerColor}">${tab.containerName.split(' ')[0]}</span>`;
+                }
+
                 tabEl.innerHTML = `
+                    ${badgeHtml}
                     <span class="tab-title">${tab.title || 'تبويب جديد'}</span>
                     <span class="tab-close" onclick="event.stopPropagation(); closeTab(${tab.id})">×</span>
                 `;
@@ -312,8 +382,14 @@ static const char* HTML_UI = R"RAW_HTML(<!DOCTYPE html>
             fetchState();
         }
 
-        async function createNewTab() {
-            await fetch('/api/tabs/new', { method: 'POST' });
+        async function createNewTab(containerId = 0) {
+            const menu = document.getElementById('containerMenu');
+            if (menu) menu.classList.remove('show');
+            await fetch('/api/tabs/new', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ containerId: containerId })
+            });
             fetchState();
         }
 
@@ -405,10 +481,14 @@ static std::string buildStateJson() {
            << "      \"id\": " << tabs[i].id << ",\n"
            << "      \"title\": \"" << tabs[i].title << "\",\n"
            << "      \"url\": \"" << tabs[i].currentUrl << "\",\n"
+           << "      \"containerId\": " << tabs[i].containerId << ",\n"
+           << "      \"containerName\": \"" << tabs[i].containerName << "\",\n"
+           << "      \"containerColor\": \"" << tabs[i].containerColor << "\",\n"
            << "      \"content\": \"" << escContent << "\"\n"
            << "    }";
     }
     ss << "\n  ],\n"
+       << "  \"containers\": " << g_engine.containers()->exportContainersJson() << ",\n"
        << "  \"bookmarks\": [\n";
 
     for (size_t i = 0; i < bookmarks.size(); ++i) {
@@ -425,7 +505,7 @@ static std::string extractJsonField(const std::string& body, const std::string& 
     std::string key = "\"" + field + "\"";
     size_t kPos = body.find(key);
     if (kPos == std::string::npos) return "";
-    size_t colon = body.find(':', kPos);
+    size_t colon = body.find(':', kPos + key.size());
     if (colon == std::string::npos) return "";
 
     size_t start = body.find_first_not_of(" \t\r\n", colon + 1);
@@ -485,7 +565,16 @@ void handleClient(int clientSocket) {
            << "}\n";
         responseBody = ss.str();
     } else if (method == "POST" && path == "/api/tabs/new") {
-        g_engine.tabs()->createTab("mybrowser://newtab");
+        std::string cIdStr = extractJsonField(body, "containerId");
+        uint32_t cId = cIdStr.empty() ? 0 : std::stoi(cIdStr);
+        std::string cName = "Default";
+        std::string cColor = "#94a3b8";
+        const auto* container = g_engine.containers()->getContainer(cId);
+        if (container) {
+            cName = container->name;
+            cColor = container->color;
+        }
+        g_engine.tabs()->createTab("mybrowser://newtab", cId, cName, cColor);
         contentType = "application/json";
         responseBody = "{\"status\": \"ok\"}";
     } else if (method == "POST" && path == "/api/tabs/switch") {

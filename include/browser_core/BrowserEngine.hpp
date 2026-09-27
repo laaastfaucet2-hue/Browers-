@@ -8,6 +8,7 @@
 #include "JsBridge.hpp"
 #include "BookmarkHistoryStore.hpp"
 #include "TabManager.hpp"
+#include "ContainerManager.hpp"
 #include <memory>
 #include <string>
 
@@ -39,6 +40,7 @@ public:
 
     // Subsystems access
     std::shared_ptr<TabManager> tabs() const { return m_tabManager; }
+    std::shared_ptr<ContainerManager> containers() const { return m_containerManager; }
     std::shared_ptr<AdBlocker> adBlocker() const { return m_adBlocker; }
     std::shared_ptr<NetworkInterceptor> network() const { return m_networkInterceptor; }
     std::shared_ptr<SchemeHandlerRegistry> schemes() const { return m_schemeRegistry; }
@@ -64,6 +66,7 @@ private:
     std::shared_ptr<JsBridge> m_jsBridge;
     std::shared_ptr<BookmarkHistoryStore> m_storage;
     std::shared_ptr<TabManager> m_tabManager;
+    std::shared_ptr<ContainerManager> m_containerManager;
     bool m_initialized = false;
 };
 

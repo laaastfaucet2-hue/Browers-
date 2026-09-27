@@ -14,7 +14,7 @@ public:
     ~TabManager() = default;
 
     // Tab operations
-    uint32_t createTab(const std::string& initialUrl = "mybrowser://newtab");
+    uint32_t createTab(const std::string& initialUrl = "mybrowser://newtab", uint32_t containerId = 0, const std::string& containerName = "Default", const std::string& containerColor = "#94a3b8");
     bool closeTab(uint32_t tabId);
     bool switchTab(uint32_t tabId);
     bool navigateTab(uint32_t tabId, const std::string& url);
@@ -22,7 +22,8 @@ public:
     bool goForward(uint32_t tabId);
     bool reloadTab(uint32_t tabId);
 
-    // Tab state
+    // Tab state & container
+    bool setTabContainer(uint32_t tabId, uint32_t containerId, const std::string& containerName, const std::string& containerColor);
     bool setPinned(uint32_t tabId, bool pinned);
     bool setMuted(uint32_t tabId, bool muted);
     bool discardTab(uint32_t tabId); // Memory Saver

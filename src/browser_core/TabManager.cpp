@@ -5,12 +5,15 @@ namespace BrowserCore {
 
 TabManager::TabManager() {}
 
-uint32_t TabManager::createTab(const std::string& initialUrl) {
+uint32_t TabManager::createTab(const std::string& initialUrl, uint32_t containerId, const std::string& containerName, const std::string& containerColor) {
     std::lock_guard<std::mutex> lock(m_mutex);
     auto tab = std::make_shared<TabInfo>();
     tab->id = m_nextTabId++;
     tab->currentUrl = initialUrl;
     tab->title = "New Tab";
+    tab->containerId = containerId;
+    tab->containerName = containerName;
+    tab->containerColor = containerColor;
     tab->historyStack.push_back(initialUrl);
     tab->historyIndex = 0;
     tab->lastAccessed = std::chrono::system_clock::now();
@@ -23,6 +26,19 @@ uint32_t TabManager::createTab(const std::string& initialUrl) {
     }
 
     return tab->id;
+}
+
+bool TabManager::setTabContainer(uint32_t tabId, uint32_t containerId, const std::string& containerName, const std::string& containerColor) {
+    std::lock_guard<std::mutex> lock(m_mutex);
+    for (auto& tab : m_tabs) {
+        if (tab->id == tabId) {
+            tab->containerId = containerId;
+            tab->containerName = containerName;
+            tab->containerColor = containerColor;
+            return true;
+        }
+    }
+    return false;
 }
 
 bool TabManager::closeTab(uint32_t tabId) {

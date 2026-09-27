@@ -67,6 +67,9 @@ struct TabInfo {
     bool isMuted = false;
     bool isPinned = false;
     bool isDiscarded = false; // Memory saver
+    uint32_t containerId = 0; // 0 = Default, 1 = Personal, 2 = Work, 3 = Banking, 4 = Shopping
+    std::string containerName = "Default";
+    std::string containerColor = "#94a3b8";
     size_t historyIndex = 0;
     std::vector<std::string> historyStack;
     std::chrono::system_clock::time_point lastAccessed;
