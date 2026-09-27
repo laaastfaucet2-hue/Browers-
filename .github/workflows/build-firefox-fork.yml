@@ -1,0 +1,86 @@
+name: Build AtlasBrowser (Firefox Gecko Fork)
+
+on:
+  workflow_dispatch:
+    inputs:
+      firefox_tag:
+        description: 'Firefox Gecko Source Tag'
+        required: true
+        default: 'FIREFOX_128_0_ESR_RELEASE'
+
+jobs:
+  build-linux:
+    name: Build AtlasBrowser for Linux x86_64
+    runs-on: ubuntu-22.04
+    timeout-minutes: 360
+
+    steps:
+      - name: Checkout AtlasBrowser Repository
+        uses: actions/checkout@v4
+
+      - name: Install System Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            curl git python3 python3-pip python3-venv \
+            build-essential clang lld libgtk-3-dev libasound2-dev \
+            libpulse-dev libdbus-glib-1-dev libxt-dev libx11-xcb-dev \
+            m4 libssl-dev libffi-dev mercurial
+
+      - name: Install Rust Toolchain & cbindgen
+        run: |
+          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+          source "$HOME/.cargo/env"
+          cargo install --force cbindgen
+          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+
+      - name: Fetch Firefox Gecko Source
+        run: |
+          mkdir -p $HOME/firefox_fork_build
+          cd $HOME/firefox_fork_build
+          git clone --depth 1 --branch ${{ github.event.inputs.firefox_tag }} https://github.com/mozilla/gecko-dev.git gecko-dev
+          cd gecko-dev
+          ./mach bootstrap --no-interactive --application-choice=browser
+
+      - name: Apply AtlasBrowser Branding, Policies & Patches
+        run: |
+          GECKO_DIR="$HOME/firefox_fork_build/gecko-dev"
+          cd "$GECKO_DIR"
+          
+          # Copy mozconfig
+          cp "$GITHUB_WORKSPACE/firefox_fork/mozconfig" .mozconfig
+          
+          # Copy Branding
+          mkdir -p browser/branding/atlasbrowser
+          cp -r "$GITHUB_WORKSPACE/firefox_fork/branding/"* browser/branding/atlasbrowser/
+          
+          # Copy Policies & Prefs
+          mkdir -p distribution browser/app/profile
+          cp "$GITHUB_WORKSPACE/firefox_fork/distribution/policies.json" distribution/
+          cp "$GITHUB_WORKSPACE/firefox_fork/preferences/atlas-prefs.js" browser/app/profile/
+          
+          # Apply Patches
+          for patch in "$GITHUB_WORKSPACE/firefox_fork/patches"/*.patch; do
+            if [ -f "$patch" ]; then
+              echo "Applying $(basename "$patch")..."
+              git apply --check "$patch" 2>/dev/null && git apply "$patch" || true
+            fi
+          done
+
+      - name: Build AtlasBrowser with Mach
+        run: |
+          cd $HOME/firefox_fork_build/gecko-dev
+          ./mach build
+
+      - name: Package AtlasBrowser Binary Distribution
+        run: |
+          cd $HOME/firefox_fork_build/gecko-dev
+          ./mach package
+          mkdir -p $GITHUB_WORKSPACE/artifacts
+          find obj-*/dist/ -name "*.tar.bz2" -o -name "*.deb" -exec cp {} $GITHUB_WORKSPACE/artifacts/ \;
+
+      - name: Upload Build Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: atlasbrowser-linux-x86_64
+          path: artifacts/*
