@@ -21,6 +21,7 @@ void BrowserEngine::initialize() {
     m_tabManager = std::make_shared<TabManager>();
     m_containerManager = std::make_shared<ContainerManager>();
     m_containerRouter = std::make_shared<AutoContainerRouter>();
+    m_workspaceManager = std::make_shared<WorkspaceManager>();
 
     setupInternalSchemes();
     setupJsBridgeApis();

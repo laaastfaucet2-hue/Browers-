@@ -10,6 +10,7 @@
 #include "TabManager.hpp"
 #include "ContainerManager.hpp"
 #include "AutoContainerRouter.hpp"
+#include "WorkspaceManager.hpp"
 #include <memory>
 #include <string>
 
@@ -46,6 +47,7 @@ public:
     std::shared_ptr<TabManager> tabs() const { return m_tabManager; }
     std::shared_ptr<ContainerManager> containers() const { return m_containerManager; }
     std::shared_ptr<AutoContainerRouter> containerRouter() const { return m_containerRouter; }
+    std::shared_ptr<WorkspaceManager> workspaces() const { return m_workspaceManager; }
     std::shared_ptr<AdBlocker> adBlocker() const { return m_adBlocker; }
     std::shared_ptr<NetworkInterceptor> network() const { return m_networkInterceptor; }
     std::shared_ptr<SchemeHandlerRegistry> schemes() const { return m_schemeRegistry; }
@@ -73,6 +75,7 @@ private:
     std::shared_ptr<TabManager> m_tabManager;
     std::shared_ptr<ContainerManager> m_containerManager;
     std::shared_ptr<AutoContainerRouter> m_containerRouter;
+    std::shared_ptr<WorkspaceManager> m_workspaceManager;
     bool m_initialized = false;
 };
 

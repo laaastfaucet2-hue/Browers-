@@ -217,19 +217,106 @@ static const char* HTML_UI = R"RAW_HTML(<!DOCTYPE html>
         .v-tab:hover { background: #334155; color: #fff; }
         .v-tab.active { background: #334155; color: #fff; font-weight: bold; box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
 
-        .layout-btn {
-            background: rgba(56, 189, 248, 0.1);
-            border: 1px solid rgba(56, 189, 248, 0.3);
-            color: var(--accent);
-            padding: 4px 10px;
-            border-radius: 8px;
+        /* Workspaces Bar */
+        .workspaces-bar {
+            background: #0b1120;
+            padding: 6px 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            overflow-x: auto;
+        }
+        .ws-pill {
+            background: #1e293b;
+            color: var(--text-muted);
+            padding: 4px 12px;
+            border-radius: 20px;
             font-size: 0.8rem;
             cursor: pointer;
             display: flex;
             align-items: center;
             gap: 6px;
+            border: 1px solid transparent;
+            transition: all 0.15s ease;
+            white-space: nowrap;
         }
-        .layout-btn:hover { background: rgba(56, 189, 248, 0.25); }
+        .ws-pill:hover { background: #334155; color: #fff; }
+        .ws-pill.active { background: rgba(56, 189, 248, 0.15); border-color: var(--accent); color: var(--accent); font-weight: bold; }
+
+        /* Split View */
+        .content-area.split-active {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 6px;
+            padding: 6px;
+            background: #0b1120;
+        }
+        .split-pane {
+            background: #0f172a;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+        .split-pane-header {
+            background: #1e293b;
+            padding: 8px 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.8rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        /* Command Palette Modal */
+        .cmd-modal-backdrop {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.7);
+            backdrop-filter: blur(4px);
+            z-index: 2000;
+            justify-content: center;
+            align-items: flex-start;
+            padding-top: 10vh;
+        }
+        .cmd-modal-backdrop.show { display: flex; }
+        .cmd-box {
+            background: #1e293b;
+            width: 600px;
+            max-width: 90%;
+            border-radius: 12px;
+            border: 1px solid var(--accent);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.6);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        .cmd-input {
+            width: 100%;
+            padding: 16px 20px;
+            background: #0f172a;
+            border: none;
+            color: #fff;
+            font-size: 1.1rem;
+            outline: none;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .cmd-list { max-height: 350px; overflow-y: auto; padding: 8px 0; }
+        .cmd-item {
+            padding: 10px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: pointer;
+            color: var(--text-main);
+            font-size: 0.9rem;
+            transition: background 0.1s;
+        }
+        .cmd-item:hover, .cmd-item.selected { background: #334155; color: var(--accent); }
+        .cmd-badge { font-size: 0.75rem; background: rgba(255,255,255,0.08); padding: 2px 6px; border-radius: 4px; color: var(--text-muted); }
 
         /* Notification Toast */
         .toast {
@@ -265,6 +352,9 @@ static const char* HTML_UI = R"RAW_HTML(<!DOCTYPE html>
         <span>🦊 مبني بنواة Mozilla Firefox (Gecko Engine Architecture)</span>
         <span>AtlasBrowser Quantum v128.0 (Firefox Edition)</span>
     </div>
+
+    <!-- Workspaces Bar (Arc / Zen Style) -->
+    <div class="workspaces-bar" id="workspacesBar"></div>
 
     <!-- Window Header & Tabs -->
     <div class="window-header">
@@ -304,7 +394,9 @@ static const char* HTML_UI = R"RAW_HTML(<!DOCTYPE html>
         <button class="nav-btn" onclick="navigate('about:addons')" title="متجر وإضافات فايرفوكس (Firefox Add-ons)">🧩</button>
         <button class="nav-btn" onclick="navigate('mybrowser://settings')" title="إعدادات المتصفح">⚙️</button>
         <button class="nav-btn" onclick="navigate('mybrowser://stats')" title="إحصائيات الحظر">📊</button>
+        <button class="layout-btn" onclick="toggleSplitView()" title="تقسيم الشاشة لعرض لسانين (Split View)">🪟 <span id="splitText">تقسيم الشاشة</span></button>
         <button class="layout-btn" onclick="toggleVerticalTabs()" title="تبديل الألسنة الجانبية (Vertical Tabs)">📑 <span id="layoutText">ألسنة جانبية</span></button>
+        <button class="layout-btn" onclick="openCommandPalette()" style="background: rgba(168, 85, 247, 0.15); border-color: rgba(168, 85, 247, 0.4); color: #c084fc;" title="لوحة الأوامر السريعة (Ctrl+K)">⚡ Ctrl+K</button>
     </div>
 
     <!-- Bookmarks Bar -->
@@ -323,6 +415,14 @@ static const char* HTML_UI = R"RAW_HTML(<!DOCTYPE html>
             </div>
         </div>
         <div class="content-area" id="contentArea"></div>
+    </div>
+
+    <!-- Command Palette Modal -->
+    <div class="cmd-modal-backdrop" id="cmdModalBackdrop" onclick="if(event.target===this) closeCommandPalette()">
+        <div class="cmd-box">
+            <input type="text" class="cmd-input" id="cmdInput" placeholder="اكتب أمراً، موقعاً، أو اختر من القائمة..." oninput="filterCommands(this.value)" onkeydown="handleCmdKey(event)">
+            <div class="cmd-list" id="cmdList"></div>
+        </div>
     </div>
 
     <div class="toast" id="toastBox"></div>
@@ -367,12 +467,29 @@ static const char* HTML_UI = R"RAW_HTML(<!DOCTYPE html>
         }
 
         function renderUI() {
+            // 1. Render Workspaces Bar
+            const wsBar = document.getElementById('workspacesBar');
+            if (wsBar && currentState.workspaces) {
+                wsBar.innerHTML = '';
+                currentState.workspaces.forEach(ws => {
+                    const pill = document.createElement('div');
+                    pill.className = 'ws-pill' + (ws.id === currentState.activeWorkspaceId ? ' active' : '');
+                    pill.onclick = () => switchWorkspace(ws.id);
+                    pill.innerHTML = `<span>${ws.icon}</span> <span>${ws.name}</span>`;
+                    wsBar.appendChild(pill);
+                });
+            }
+
+            // 2. Render Tabs (filtered by active workspace)
             const tabsList = document.getElementById('tabsList');
             const vTabsList = document.getElementById('vTabsList');
             tabsList.innerHTML = '';
             if (vTabsList) vTabsList.innerHTML = '';
 
-            currentState.tabs.forEach(tab => {
+            const currentWsId = currentState.activeWorkspaceId || 1;
+            const visibleTabs = currentState.tabs.filter(t => !t.workspaceId || t.workspaceId === currentWsId);
+
+            visibleTabs.forEach(tab => {
                 const tabEl = document.createElement('div');
                 tabEl.className = 'tab' + (tab.id === currentState.activeTabId ? ' active' : '');
                 tabEl.style.setProperty('--container-color', tab.containerColor || '#94a3b8');
@@ -405,6 +522,13 @@ static const char* HTML_UI = R"RAW_HTML(<!DOCTYPE html>
                 }
             });
 
+            // 3. Update Split View Button Text
+            const splitText = document.getElementById('splitText');
+            if (splitText && currentState.splitView) {
+                splitText.innerText = currentState.splitView.enabled ? 'إلغاء التقسيم' : 'تقسيم الشاشة';
+            }
+
+            // 4. Update Omnibar & Content
             const activeTab = currentState.tabs.find(t => t.id === currentState.activeTabId);
             if (activeTab) {
                 document.getElementById('urlInput').value = activeTab.url;
@@ -432,14 +556,116 @@ static const char* HTML_UI = R"RAW_HTML(<!DOCTYPE html>
             });
         }
 
-        function renderContent(tab) {
+        function renderContent(primaryTab) {
             const area = document.getElementById('contentArea');
-            if (tab.content) {
-                area.innerHTML = tab.content;
+            if (currentState.splitView && currentState.splitView.enabled) {
+                area.classList.add('split-active');
+                const secondaryTab = currentState.tabs.find(t => t.id === currentState.splitView.secondaryId) || primaryTab;
+                area.innerHTML = `
+                    <div class="split-pane">
+                        <div class="split-pane-header">
+                            <span style="color: #38bdf8; font-weight:bold;">اللسان الأول: ${primaryTab.title}</span>
+                            <span style="font-size:0.75rem; color:${primaryTab.containerColor}">${primaryTab.containerName}</span>
+                        </div>
+                        <div style="flex:1; overflow-y:auto;">${primaryTab.content || ''}</div>
+                    </div>
+                    <div class="split-pane">
+                        <div class="split-pane-header">
+                            <span style="color: #4ade80; font-weight:bold;">اللسان الثاني (Split): ${secondaryTab.title}</span>
+                            <button onclick="toggleSplitView()" style="background:transparent; border:none; color:#ef4444; font-size:1rem; cursor:pointer;">×</button>
+                        </div>
+                        <div style="flex:1; overflow-y:auto;">${secondaryTab.content || ''}</div>
+                    </div>
+                `;
             } else {
-                area.innerHTML = '<div style="padding:40px; text-align:center; color:#94a3b8;">جاري التحميل...</div>';
+                area.classList.remove('split-active');
+                if (primaryTab.content) {
+                    area.innerHTML = primaryTab.content;
+                } else {
+                    area.innerHTML = '<div style="padding:40px; text-align:center; color:#94a3b8;">جاري التحميل...</div>';
+                }
             }
         }
+
+        async function switchWorkspace(id) {
+            await fetch('/api/workspaces/switch', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id: id })
+            });
+            fetchState();
+        }
+
+        async function toggleSplitView() {
+            await fetch('/api/splitview/toggle', { method: 'POST' });
+            fetchState();
+        }
+
+        // Command Palette
+        const COMMANDS = [
+            { id: 'new_tab', title: 'فتح لسان جديد عادي', icon: '➕', action: () => createNewTab(0) },
+            { id: 'c_work', title: 'فتح لسان في حاوية العمل (Work Container)', icon: '🟠', action: () => createNewTab(2) },
+            { id: 'c_bank', title: 'فتح لسان في حاوية البنوك (Banking Container)', icon: '🟢', action: () => createNewTab(3) },
+            { id: 'c_shop', title: 'فتح لسان في حاوية التسوق (Shopping Container)', icon: '🌸', action: () => createNewTab(4) },
+            { id: 'c_pers', title: 'فتح لسان في حاوية شخصي (Personal Container)', icon: '🔵', action: () => createNewTab(1) },
+            { id: 'split', title: 'تبديل تقسيم الشاشة (Toggle Split View)', icon: '🪟', action: () => toggleSplitView() },
+            { id: 'vtabs', title: 'تبديل الألسنة الجانبية (Vertical Tabs)', icon: '📑', action: () => toggleVerticalTabs() },
+            { id: 'addons', title: 'فتح متجر إضافات فايرفوكس (AMO Add-ons)', icon: '🧩', action: () => navigate('about:addons') },
+            { id: 'settings', title: 'إعدادات النواة C++', icon: '⚙️', action: () => navigate('mybrowser://settings') },
+            { id: 'stats', title: 'إحصائيات الحظر والدرع', icon: '📊', action: () => navigate('mybrowser://stats') },
+            { id: 'shield', title: 'تبديل درع الإعلانات (Toggle Shield)', icon: '🛡️', action: () => toggleShield() }
+        ];
+
+        function openCommandPalette() {
+            const modal = document.getElementById('cmdModalBackdrop');
+            modal.classList.add('show');
+            const inp = document.getElementById('cmdInput');
+            inp.value = '';
+            inp.focus();
+            filterCommands('');
+        }
+
+        function closeCommandPalette() {
+            const modal = document.getElementById('cmdModalBackdrop');
+            modal.classList.remove('show');
+        }
+
+        function filterCommands(query) {
+            const list = document.getElementById('cmdList');
+            list.innerHTML = '';
+            const q = query.toLowerCase().trim();
+            const filtered = COMMANDS.filter(c => c.title.toLowerCase().includes(q));
+
+            filtered.forEach((cmd, idx) => {
+                const item = document.createElement('div');
+                item.className = 'cmd-item' + (idx === 0 ? ' selected' : '');
+                item.onclick = () => { closeCommandPalette(); cmd.action(); };
+                item.innerHTML = `
+                    <div style="display:flex; align-items:center; gap:12px;">
+                        <span>${cmd.icon}</span>
+                        <span>${cmd.title}</span>
+                    </div>
+                    <span class="cmd-badge">Enter</span>
+                `;
+                list.appendChild(item);
+            });
+        }
+
+        function handleCmdKey(e) {
+            if (e.key === 'Escape') {
+                closeCommandPalette();
+            } else if (e.key === 'Enter') {
+                const selected = document.querySelector('.cmd-item.selected') || document.querySelector('.cmd-item');
+                if (selected) selected.click();
+            }
+        }
+
+        window.addEventListener('keydown', (e) => {
+            if ((e.ctrlKey || e.metaKey) && (e.key === 'k' || e.key === 'K')) {
+                e.preventDefault();
+                openCommandPalette();
+            }
+        });
 
         async function handleUrlSubmit() {
             const input = document.getElementById('urlInput').value.trim();
@@ -629,10 +855,19 @@ static std::string buildStateJson() {
            << "      \"containerId\": " << tabs[i].containerId << ",\n"
            << "      \"containerName\": \"" << tabs[i].containerName << "\",\n"
            << "      \"containerColor\": \"" << tabs[i].containerColor << "\",\n"
+           << "      \"workspaceId\": " << tabs[i].workspaceId << ",\n"
            << "      \"content\": \"" << escContent << "\"\n"
            << "    }";
     }
+    auto splitState = g_engine.tabs()->getSplitView();
     ss << "\n  ],\n"
+       << "  \"activeWorkspaceId\": " << g_engine.workspaces()->getActiveWorkspaceId() << ",\n"
+       << "  \"workspaces\": " << g_engine.workspaces()->exportWorkspacesJson() << ",\n"
+       << "  \"splitView\": {\n"
+       << "    \"enabled\": " << (splitState.enabled ? "true" : "false") << ",\n"
+       << "    \"primaryId\": " << splitState.primaryTabId << ",\n"
+       << "    \"secondaryId\": " << splitState.secondaryTabId << "\n"
+       << "  },\n"
        << "  \"containers\": " << g_engine.containers()->exportContainersJson() << ",\n"
        << "  \"bookmarks\": [\n";
 
@@ -734,7 +969,51 @@ void handleClient(int clientSocket) {
             cName = container->name;
             cColor = container->color;
         }
-        g_engine.tabs()->createTab("mybrowser://newtab", cId, cName, cColor);
+        uint32_t wsId = g_engine.workspaces()->getActiveWorkspaceId();
+        g_engine.tabs()->createTab("mybrowser://newtab", cId, cName, cColor, wsId);
+        contentType = "application/json";
+        responseBody = "{\"status\": \"ok\"}";
+    } else if (method == "POST" && path == "/api/workspaces/switch") {
+        std::string wsIdStr = extractJsonField(body, "id");
+        if (!wsIdStr.empty()) {
+            uint32_t wsId = std::stoi(wsIdStr);
+            g_engine.workspaces()->switchWorkspace(wsId);
+            auto tabsInWs = g_engine.tabs()->getTabsInWorkspace(wsId);
+            if (!tabsInWs.empty()) {
+                g_engine.tabs()->switchTab(tabsInWs[0].id);
+            } else {
+                const auto* ws = g_engine.workspaces()->getWorkspace(wsId);
+                uint32_t cId = ws ? ws->defaultContainerId : 0;
+                std::string cName = "Default";
+                std::string cColor = "#94a3b8";
+                const auto* container = g_engine.containers()->getContainer(cId);
+                if (container) {
+                    cName = container->name;
+                    cColor = container->color;
+                }
+                g_engine.tabs()->createTab("mybrowser://newtab", cId, cName, cColor, wsId);
+            }
+        }
+        contentType = "application/json";
+        responseBody = "{\"status\": \"ok\"}";
+    } else if (method == "POST" && path == "/api/splitview/toggle") {
+        auto currentSplit = g_engine.tabs()->getSplitView();
+        bool newEnabled = !currentSplit.enabled;
+        uint32_t secId = 0;
+        if (newEnabled) {
+            auto allTabs = g_engine.tabs()->getAllTabs();
+            uint32_t activeId = g_engine.tabs()->getActiveTabId();
+            for (const auto& t : allTabs) {
+                if (t.id != activeId) {
+                    secId = t.id;
+                    break;
+                }
+            }
+            if (secId == 0) {
+                secId = g_engine.tabs()->createTab("https://duckduckgo.com");
+            }
+        }
+        g_engine.tabs()->setSplitView(newEnabled, secId);
         contentType = "application/json";
         responseBody = "{\"status\": \"ok\"}";
     } else if (method == "POST" && path == "/api/tabs/switch") {

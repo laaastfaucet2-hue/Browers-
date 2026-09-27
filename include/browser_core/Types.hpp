@@ -70,9 +70,16 @@ struct TabInfo {
     uint32_t containerId = 0; // 0 = Default, 1 = Personal, 2 = Work, 3 = Banking, 4 = Shopping
     std::string containerName = "Default";
     std::string containerColor = "#94a3b8";
+    uint32_t workspaceId = 1; // 1 = Work/Dev, 2 = Personal, 3 = Finance, 4 = Research
     size_t historyIndex = 0;
     std::vector<std::string> historyStack;
     std::chrono::system_clock::time_point lastAccessed;
+};
+
+struct SplitViewState {
+    bool enabled = false;
+    uint32_t primaryTabId = 0;
+    uint32_t secondaryTabId = 0;
 };
 
 struct BrowserConfig {

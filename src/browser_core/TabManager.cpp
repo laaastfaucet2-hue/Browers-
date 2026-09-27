@@ -5,7 +5,7 @@ namespace BrowserCore {
 
 TabManager::TabManager() {}
 
-uint32_t TabManager::createTab(const std::string& initialUrl, uint32_t containerId, const std::string& containerName, const std::string& containerColor) {
+uint32_t TabManager::createTab(const std::string& initialUrl, uint32_t containerId, const std::string& containerName, const std::string& containerColor, uint32_t workspaceId) {
     std::lock_guard<std::mutex> lock(m_mutex);
     auto tab = std::make_shared<TabInfo>();
     tab->id = m_nextTabId++;
@@ -14,6 +14,7 @@ uint32_t TabManager::createTab(const std::string& initialUrl, uint32_t container
     tab->containerId = containerId;
     tab->containerName = containerName;
     tab->containerColor = containerColor;
+    tab->workspaceId = workspaceId;
     tab->historyStack.push_back(initialUrl);
     tab->historyIndex = 0;
     tab->lastAccessed = std::chrono::system_clock::now();
@@ -26,6 +27,40 @@ uint32_t TabManager::createTab(const std::string& initialUrl, uint32_t container
     }
 
     return tab->id;
+}
+
+bool TabManager::setTabWorkspace(uint32_t tabId, uint32_t workspaceId) {
+    std::lock_guard<std::mutex> lock(m_mutex);
+    for (auto& tab : m_tabs) {
+        if (tab->id == tabId) {
+            tab->workspaceId = workspaceId;
+            return true;
+        }
+    }
+    return false;
+}
+
+std::vector<TabInfo> TabManager::getTabsInWorkspace(uint32_t workspaceId) const {
+    std::lock_guard<std::mutex> lock(m_mutex);
+    std::vector<TabInfo> list;
+    for (const auto& tab : m_tabs) {
+        if (tab->workspaceId == workspaceId) {
+            list.push_back(*tab);
+        }
+    }
+    return list;
+}
+
+SplitViewState TabManager::getSplitView() const {
+    std::lock_guard<std::mutex> lock(m_mutex);
+    return m_splitView;
+}
+
+void TabManager::setSplitView(bool enabled, uint32_t secondaryTabId) {
+    std::lock_guard<std::mutex> lock(m_mutex);
+    m_splitView.enabled = enabled;
+    m_splitView.primaryTabId = m_activeTabId;
+    m_splitView.secondaryTabId = secondaryTabId;
 }
 
 bool TabManager::setTabContainer(uint32_t tabId, uint32_t containerId, const std::string& containerName, const std::string& containerColor) {
