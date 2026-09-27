@@ -1,0 +1,41 @@
+# =============================================================================
+# AtlasBrowser - Custom Firefox/Gecko Fork Build Configuration
+# File: mozconfig
+# =============================================================================
+
+# Build desktop browser application
+ac_add_options --enable-application=browser
+
+# Build targets & Release optimizations
+ac_add_options --enable-optimize="-O3"
+ac_add_options --disable-debug
+ac_add_options --enable-release
+ac_add_options --enable-lto=thin
+
+# Branding & Product Identity
+ac_add_options --enable-official-branding
+ac_add_options --with-app-name=atlasbrowser
+ac_add_options --with-app-basename=AtlasBrowser
+ac_add_options --with-branding=browser/branding/atlasbrowser
+
+# WebExtensions & Multi-Account Containers Support
+ac_add_options --enable-extensions
+ac_add_options --enable-webrtc
+
+# Privacy & De-telemetry (Removes Mozilla tracking phone-home)
+ac_add_options --disable-telemetry
+ac_add_options --disable-tests
+ac_add_options --disable-crashreporter
+ac_add_options --disable-updater
+ac_add_options --disable-pocket
+ac_add_options --disable-default-browser-agent
+
+# Codecs & Media Acceleration
+ac_add_options --enable-ffmpeg
+ac_add_options --enable-alsa
+ac_add_options --enable-pulseaudio
+
+# Compiler & Rust Flags
+export CC="clang"
+export CXX="clang++"
+export RUSTFLAGS="-C opt-level=3"

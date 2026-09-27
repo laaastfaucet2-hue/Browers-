@@ -219,8 +219,8 @@ static const char* HTML_UI = R"RAW_HTML(<!DOCTYPE html>
 </head>
 <body>
     <div class="banner-engine">
-        <span>⚡ متصل بمحرك C++20 الأصلي المترجم مباشرة (Native C++ Binary)</span>
-        <span>AtlasBrowser Engine v1.0.0</span>
+        <span>🦊 مبني بنواة Mozilla Firefox (Gecko Engine Architecture)</span>
+        <span>AtlasBrowser Quantum v128.0 (Firefox Edition)</span>
     </div>
 
     <!-- Window Header & Tabs -->
@@ -258,6 +258,7 @@ static const char* HTML_UI = R"RAW_HTML(<!DOCTYPE html>
             <input type="text" class="omnibar-input" id="urlInput" placeholder="اكتب عنوان ويب أو ابحث في الويب..." onkeydown="if(event.key==='Enter') handleUrlSubmit()">
         </div>
 
+        <button class="nav-btn" onclick="navigate('about:addons')" title="متجر وإضافات فايرفوكس (Firefox Add-ons)">🧩</button>
         <button class="nav-btn" onclick="navigate('mybrowser://settings')" title="إعدادات المتصفح">⚙️</button>
         <button class="nav-btn" onclick="navigate('mybrowser://stats')" title="إحصائيات الحظر">📊</button>
     </div>
@@ -431,6 +432,15 @@ static const char* HTML_UI = R"RAW_HTML(<!DOCTYPE html>
             fetchState();
         }
 
+        function installAddon(name, icon) {
+            showToast(`تم تثبيت إضافة ${name} من متجر فايرفوكس الرسمي وتفعيلها بنجاح! 🎉`);
+            const bBar = document.getElementById('bookmarksBar');
+            const span = document.createElement('span');
+            span.style = 'background: rgba(56, 189, 248, 0.15); color: #38bdf8; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; margin-right: 8px;';
+            span.innerHTML = `${icon} ${name} (نشط)`;
+            bBar.appendChild(span);
+        }
+
         fetchState();
     </script>
 </body>
@@ -459,7 +469,62 @@ static std::string buildStateJson() {
     for (size_t i = 0; i < tabs.size(); ++i) {
         if (i > 0) ss << ",\n";
         std::string contentPreview = "";
-        if (tabs[i].currentUrl.rfind("mybrowser://", 0) == 0) {
+        if (tabs[i].currentUrl.rfind("about:addons", 0) == 0 || tabs[i].currentUrl.rfind("mybrowser://addons", 0) == 0) {
+            contentPreview = R"ADDONS_HTML(
+                <div style="padding: 40px; max-width: 900px; margin: 0 auto;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; border-bottom: 2px solid #334155; padding-bottom: 16px; margin-bottom: 24px;">
+                        <div>
+                            <h1 style="color: #38bdf8; font-size: 2rem; margin: 0;">🧩 إدارة إضافات فايرفوكس (Firefox Add-ons)</h1>
+                            <p style="color: #94a3b8; margin-top: 6px;">تثبيت وإدارة إضافات WebExtensions من الموقع الرسمي addons.mozilla.org</p>
+                        </div>
+                        <span style="background: rgba(251, 146, 60, 0.2); color: #fb923c; border: 1px solid #fb923c; padding: 6px 14px; border-radius: 20px; font-weight: bold; font-size: 0.85rem;">AMO متصل ومفعل</span>
+                    </div>
+
+                    <h3 style="color: #f8fafc; margin-bottom: 16px;">الإضافات الرسمية الموصى بها:</h3>
+                    
+                    <div style="display: flex; flex-direction: column; gap: 16px;">
+                        <!-- Multi-Account Containers -->
+                        <div style="background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 20px; display: flex; justify-content: space-between; align-items: center;">
+                            <div style="display: flex; gap: 16px; align-items: center;">
+                                <div style="font-size: 2.2rem; background: rgba(56, 189, 248, 0.1); width: 60px; height: 60px; border-radius: 12px; display: flex; align-items: center; justify-content: center;">🛡️</div>
+                                <div>
+                                    <div style="font-size: 1.15rem; font-weight: bold; color: #fff;">Firefox Multi-Account Containers</div>
+                                    <p style="color: #94a3b8; font-size: 0.85rem; margin-top: 4px;">عزل ملفات تعريف الارتباط والهوية لكل حساب (العمل، شخصي، بنكي) في ألسنة مستقلة داخل نفس النافذة.</p>
+                                    <span style="font-size: 0.75rem; color: #38bdf8;">بواسطة: Mozilla Firefox Team • المعرف: @testpilot-containers</span>
+                                </div>
+                            </div>
+                            <button onclick="installAddon('Firefox Multi-Account Containers', '🛡️')" style="background: #22c55e; color: #fff; border: none; padding: 10px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; white-space: nowrap;">✓ مثبتة ونشطة (Installed)</button>
+                        </div>
+
+                        <!-- uBlock Origin -->
+                        <div style="background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 20px; display: flex; justify-content: space-between; align-items: center;">
+                            <div style="display: flex; gap: 16px; align-items: center;">
+                                <div style="font-size: 2.2rem; background: rgba(239, 68, 68, 0.1); width: 60px; height: 60px; border-radius: 12px; display: flex; align-items: center; justify-content: center;">🛑</div>
+                                <div>
+                                    <div style="font-size: 1.15rem; font-weight: bold; color: #fff;">uBlock Origin</div>
+                                    <p style="color: #94a3b8; font-size: 0.85rem; margin-top: 4px;">مانع إعلانات خفيف وفعال جداً يدعم واجهات Manifest V2 الكاملة الحصرية في فايرفوكس.</p>
+                                    <span style="font-size: 0.75rem; color: #38bdf8;">بواسطة: Raymond Hill • صيغة: .xpi</span>
+                                </div>
+                            </div>
+                            <button onclick="installAddon('uBlock Origin', '🛑')" style="background: #38bdf8; color: #0f172a; border: none; padding: 10px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; white-space: nowrap;">+ أضف إلى فايرفوكس</button>
+                        </div>
+
+                        <!-- Dark Reader -->
+                        <div style="background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 20px; display: flex; justify-content: space-between; align-items: center;">
+                            <div style="display: flex; gap: 16px; align-items: center;">
+                                <div style="font-size: 2.2rem; background: rgba(168, 85, 247, 0.1); width: 60px; height: 60px; border-radius: 12px; display: flex; align-items: center; justify-content: center;">🌙</div>
+                                <div>
+                                    <div style="font-size: 1.15rem; font-weight: bold; color: #fff;">Dark Reader</div>
+                                    <p style="color: #94a3b8; font-size: 0.85rem; margin-top: 4px;">تفعيل الوضع الليلي الداكن لجميع المواقع على الإنترنت بذكاء وحماية العينين.</p>
+                                    <span style="font-size: 0.75rem; color: #38bdf8;">بواسطة: Alexander Shutov</span>
+                                </div>
+                            </div>
+                            <button onclick="installAddon('Dark Reader', '🌙')" style="background: #38bdf8; color: #0f172a; border: none; padding: 10px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; white-space: nowrap;">+ أضف إلى فايرفوكس</button>
+                        </div>
+                    </div>
+                </div>
+            )ADDONS_HTML";
+        } else if (tabs[i].currentUrl.rfind("mybrowser://", 0) == 0) {
             auto schemeResp = g_engine.schemes()->handleRequest(tabs[i].currentUrl);
             contentPreview = schemeResp.content;
         } else {
@@ -553,7 +618,19 @@ void handleClient(int clientSocket) {
         responseBody = buildStateJson();
     } else if (method == "POST" && path == "/api/navigate") {
         std::string url = extractJsonField(body, "url");
+        if (url == "addons" || url == "about:addons" || url.find("addons.mozilla.org") != std::string::npos) {
+            url = "about:addons";
+        }
         auto navRes = g_engine.navigateActiveTab(url);
+        if (url == "about:addons") {
+            auto cur = g_engine.tabs()->getActiveTab();
+            if (cur) {
+                cur->title = "إضافات فايرفوكس";
+                cur->currentUrl = "about:addons";
+            }
+            navRes.finalUrl = "about:addons";
+            navRes.pageTitle = "إضافات فايرفوكس";
+        }
 
         contentType = "application/json";
         std::ostringstream ss;

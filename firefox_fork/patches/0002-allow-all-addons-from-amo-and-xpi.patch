@@ -1,0 +1,8 @@
+diff --git a/toolkit/mozapps/extensions/internal/XPIInstall.jsm b/toolkit/mozapps/extensions/internal/XPIInstall.jsm
+--- a/toolkit/mozapps/extensions/internal/XPIInstall.jsm
++++ b/toolkit/mozapps/extensions/internal/XPIInstall.jsm
+@@ -102,6 +102,8 @@ function shouldVerifySignature(addon) {
+   // In custom AtlasBrowser fork: bypass strict signature verification
++  // Allows installing any add-on directly from AMO or local XPI files
++  return false;
+ }

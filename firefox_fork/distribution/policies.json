@@ -1,0 +1,55 @@
+{
+  "policies": {
+    "Containers": {
+      "Default": [
+        {
+          "name": "Personal",
+          "color": "blue",
+          "icon": "fingerprint"
+        },
+        {
+          "name": "Work",
+          "color": "orange",
+          "icon": "briefcase"
+        },
+        {
+          "name": "Banking",
+          "color": "green",
+          "icon": "dollar"
+        },
+        {
+          "name": "Shopping",
+          "color": "pink",
+          "icon": "cart"
+        }
+      ]
+    },
+    "ExtensionSettings": {
+      "*": {
+        "installation_mode": "allowed",
+        "install_sources": [
+          "https://addons.mozilla.org/*"
+        ]
+      },
+      "@testpilot-containers": {
+        "installation_mode": "normal_installed",
+        "install_url": "https://addons.mozilla.org/firefox/downloads/latest/multi-account-containers/latest.xpi"
+      },
+      "uBlock0@raymondhill.net": {
+        "installation_mode": "allowed",
+        "install_url": "https://addons.mozilla.org/firefox/downloads/latest/ublock-origin/latest.xpi"
+      }
+    },
+    "DisableTelemetry": true,
+    "DisableFirefoxStudies": true,
+    "DisablePocket": true,
+    "OfferToSaveLogins": true,
+    "PasswordManagerEnabled": true,
+    "SanitizeOnShutdown": false,
+    "DNSOverHTTPS": {
+      "Enabled": true,
+      "ProviderURL": "https://cloudflare-dns.com/dns-query",
+      "Locked": false
+    }
+  }
+}

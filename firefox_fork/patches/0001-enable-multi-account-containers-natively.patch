@@ -1,0 +1,13 @@
+diff --git a/browser/components/contextualidentity/ContextualIdentityService.jsm b/browser/components/contextualidentity/ContextualIdentityService.jsm
+--- a/browser/components/contextualidentity/ContextualIdentityService.jsm
++++ b/browser/components/contextualidentity/ContextualIdentityService.jsm
+@@ -32,6 +32,9 @@ class ContextualIdentityService {
+   init() {
+     this._defaultIdentities = [
++      { userContextId: 1, name: "Personal", icon: "fingerprint", color: "blue" },
++      { userContextId: 2, name: "Work", icon: "briefcase", color: "orange" },
++      { userContextId: 3, name: "Banking", icon: "dollar", color: "green" },
++      { userContextId: 4, name: "Shopping", icon: "cart", color: "pink" }
+     ];
+   }
+ }

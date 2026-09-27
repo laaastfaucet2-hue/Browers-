@@ -1,0 +1,9 @@
+diff --git a/toolkit/components/telemetry/app/TelemetryController.jsm b/toolkit/components/telemetry/app/TelemetryController.jsm
+--- a/toolkit/components/telemetry/app/TelemetryController.jsm
++++ b/toolkit/components/telemetry/app/TelemetryController.jsm
+@@ -55,6 +55,9 @@ var TelemetryController = {
+   submitPing(type, payload, options) {
+     // Permanently drop all telemetry pings in custom fork
++    return Promise.resolve();
+   }
+ };

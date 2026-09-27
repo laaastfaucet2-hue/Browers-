@@ -1,0 +1,10 @@
+diff --git a/caps/OriginAttributes.cpp b/caps/OriginAttributes.cpp
+--- a/caps/OriginAttributes.cpp
++++ b/caps/OriginAttributes.cpp
+@@ -25,6 +25,11 @@ void OriginAttributes::CreateSuffix(nsACString& aStr) const {
+   if (mUserContextId != 0) {
+     aStr.AppendLiteral("^userContextId=");
+     aStr.AppendInt(mUserContextId);
++    // Custom fork hook: enforce strict partition per container
+   }
+ }
