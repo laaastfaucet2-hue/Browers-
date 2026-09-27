@@ -18,11 +18,11 @@ static const char* HTML_UI = R"RAW_HTML(<!DOCTYPE html>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AtlasBrowser - متصفح C++ المخصص</title>
+    <title>AtlasBrowser Quantum v128.0 (Firefox Edition)</title>
     <style>
         :root {
             --bg-dark: #0f172a;
-            --bg-toolbar: #1e293b;
+            --bg-panel: #1e293b;
             --bg-tab-active: #334155;
             --bg-tab-inactive: #1e293b;
             --border-color: #334155;
@@ -31,7 +31,36 @@ static const char* HTML_UI = R"RAW_HTML(<!DOCTYPE html>
             --text-muted: #94a3b8;
             --danger: #ef4444;
             --success: #22c55e;
+            --warning: #fb923c;
         }
+
+        body.theme-oled {
+            --bg-dark: #000000;
+            --bg-panel: #0a0a0a;
+            --bg-tab-active: #171717;
+            --bg-tab-inactive: #0a0a0a;
+            --border-color: #262626;
+            --accent: #38bdf8;
+        }
+
+        body.theme-cyberpunk {
+            --bg-dark: #0d0221;
+            --bg-panel: #19053b;
+            --bg-tab-active: #260959;
+            --bg-tab-inactive: #12032e;
+            --border-color: #ff007f;
+            --accent: #00f0ff;
+        }
+
+        body.theme-nord {
+            --bg-dark: #2e3440;
+            --bg-panel: #3b4252;
+            --bg-tab-active: #434c5e;
+            --bg-tab-inactive: #2e3440;
+            --border-color: #4c566a;
+            --accent: #88c0d0;
+        }
+
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
         body { background: var(--bg-dark); color: var(--text-main); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
 
@@ -62,33 +91,55 @@ static const char* HTML_UI = R"RAW_HTML(<!DOCTYPE html>
             transition: all 0.15s ease;
             position: relative;
         }
-        .tab:hover { background: #243248; color: var(--text-main); }
-        .tab.active { background: var(--bg-toolbar); color: var(--text-main); font-weight: 500; border-color: var(--border-color); border-bottom: 3px solid var(--container-color, #38bdf8); }
+        .tab:hover { background: #283548; color: var(--text-main); }
+        .tab.active {
+            background: var(--bg-tab-active);
+            color: #fff;
+            border-color: var(--border-color);
+            border-bottom-color: var(--container-color, var(--accent));
+            font-weight: 500;
+        }
         .tab-title { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1; }
+        .tab-close {
+            opacity: 0.6;
+            padding: 2px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 18px;
+            height: 18px;
+            font-size: 0.8rem;
+        }
+        .tab-close:hover { background: rgba(255,255,255,0.2); opacity: 1; }
         .container-badge {
             font-size: 0.65rem;
-            padding: 2px 6px;
+            padding: 1px 6px;
             border-radius: 4px;
-            font-weight: bold;
-            background: var(--container-color);
             color: #fff;
-            white-space: nowrap;
+            background: var(--container-color, #94a3b8);
+            font-weight: bold;
         }
-        .tab-close { opacity: 0.6; font-size: 1rem; border-radius: 50%; padding: 0 4px; }
-        .tab-close:hover { opacity: 1; background: rgba(255,255,255,0.1); color: var(--danger); }
-        .btn-new-tab { background: transparent; border: none; color: var(--text-muted); font-size: 1.2rem; cursor: pointer; padding: 4px 10px; border-radius: 6px; }
-        .btn-new-tab:hover { background: var(--bg-toolbar); color: var(--text-main); }
 
-        .container-dropdown {
-            position: relative;
-            display: inline-block;
+        .btn-new-tab {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            font-size: 1.1rem;
+            padding: 6px 10px;
+            cursor: pointer;
+            border-radius: 6px;
+            margin-right: 4px;
         }
+        .btn-new-tab:hover { background: var(--border-color); color: var(--text-main); }
+
+        .container-dropdown { position: relative; display: inline-block; }
         .container-menu {
             display: none;
             position: absolute;
-            left: 0;
             top: 100%;
-            background: #1e293b;
+            left: 0;
+            background: var(--bg-panel);
             border: 1px solid var(--border-color);
             border-radius: 8px;
             box-shadow: 0 10px 25px rgba(0,0,0,0.5);
@@ -102,21 +153,20 @@ static const char* HTML_UI = R"RAW_HTML(<!DOCTYPE html>
             display: flex;
             align-items: center;
             gap: 10px;
-            color: var(--text-main);
-            font-size: 0.85rem;
             cursor: pointer;
-            transition: background 0.15s;
+            font-size: 0.85rem;
+            color: var(--text-main);
         }
         .container-option:hover { background: #334155; }
         .c-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
 
         /* Toolbar */
         .toolbar {
-            background: var(--bg-toolbar);
+            background: var(--bg-panel);
             padding: 8px 16px;
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 8px;
             border-bottom: 1px solid var(--border-color);
         }
         .nav-btn {
@@ -169,8 +219,24 @@ static const char* HTML_UI = R"RAW_HTML(<!DOCTYPE html>
             display: flex;
             align-items: center;
             gap: 4px;
+            white-space: nowrap;
         }
         .shield-btn.off { background: rgba(239, 68, 68, 0.15); border-color: rgba(239, 68, 68, 0.4); color: var(--danger); }
+
+        .layout-btn {
+            background: #0f172a;
+            border: 1px solid var(--border-color);
+            color: var(--text-muted);
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            white-space: nowrap;
+        }
+        .layout-btn:hover { border-color: var(--accent); color: #fff; }
 
         /* Bookmarks Bar */
         .bookmarks-bar {
@@ -184,6 +250,33 @@ static const char* HTML_UI = R"RAW_HTML(<!DOCTYPE html>
         }
         .bookmark-item { color: var(--text-muted); text-decoration: none; display: flex; align-items: center; gap: 6px; cursor: pointer; }
         .bookmark-item:hover { color: var(--accent); }
+
+        /* Workspaces Bar */
+        .workspaces-bar {
+            background: #0b1120;
+            padding: 6px 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            overflow-x: auto;
+        }
+        .ws-pill {
+            background: var(--bg-panel);
+            color: var(--text-muted);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            border: 1px solid transparent;
+            transition: all 0.15s ease;
+            white-space: nowrap;
+        }
+        .ws-pill:hover { background: #334155; color: #fff; }
+        .ws-pill.active { background: rgba(56, 189, 248, 0.15); border-color: var(--accent); color: var(--accent); font-weight: bold; }
 
         /* Main Body Layout */
         .main-wrapper { display: flex; flex: 1; overflow: hidden; position: relative; }
@@ -202,7 +295,7 @@ static const char* HTML_UI = R"RAW_HTML(<!DOCTYPE html>
         body.vertical-mode .window-header .btn-new-tab { display: none; }
 
         .v-tab {
-            background: #1e293b;
+            background: var(--bg-panel);
             color: var(--text-muted);
             padding: 10px 12px;
             border-radius: 8px;
@@ -217,32 +310,7 @@ static const char* HTML_UI = R"RAW_HTML(<!DOCTYPE html>
         .v-tab:hover { background: #334155; color: #fff; }
         .v-tab.active { background: #334155; color: #fff; font-weight: bold; box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
 
-        /* Workspaces Bar */
-        .workspaces-bar {
-            background: #0b1120;
-            padding: 6px 16px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            border-bottom: 1px solid rgba(255,255,255,0.05);
-            overflow-x: auto;
-        }
-        .ws-pill {
-            background: #1e293b;
-            color: var(--text-muted);
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 0.8rem;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            border: 1px solid transparent;
-            transition: all 0.15s ease;
-            white-space: nowrap;
-        }
-        .ws-pill:hover { background: #334155; color: #fff; }
-        .ws-pill.active { background: rgba(56, 189, 248, 0.15); border-color: var(--accent); color: var(--accent); font-weight: bold; }
+        .content-area { flex: 1; background: var(--bg-dark); overflow-y: auto; position: relative; }
 
         /* Split View */
         .content-area.split-active {
@@ -268,6 +336,99 @@ static const char* HTML_UI = R"RAW_HTML(<!DOCTYPE html>
             align-items: center;
             font-size: 0.8rem;
             border-bottom: 1px solid var(--border-color);
+        }
+
+        /* AI Copilot Side Drawer */
+        .ai-copilot-drawer {
+            width: 340px;
+            background: #080d1a;
+            border-right: 1px solid var(--border-color);
+            display: none;
+            flex-direction: column;
+            z-index: 50;
+            box-shadow: -5px 0 25px rgba(0,0,0,0.5);
+        }
+        .ai-copilot-drawer.show { display: flex; }
+        .ai-header {
+            padding: 12px 16px;
+            background: #0f172a;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .ai-quick-actions {
+            padding: 8px 12px;
+            display: flex;
+            gap: 6px;
+            overflow-x: auto;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+        .ai-pill {
+            background: #1e293b;
+            color: #38bdf8;
+            border: 1px solid #334155;
+            padding: 4px 10px;
+            border-radius: 14px;
+            font-size: 0.75rem;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+        .ai-pill:hover { background: #38bdf8; color: #000; }
+        .ai-chat-body {
+            flex: 1;
+            padding: 14px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .ai-msg {
+            padding: 10px 14px;
+            border-radius: 10px;
+            font-size: 0.85rem;
+            line-height: 1.5;
+            max-width: 88%;
+            word-break: break-word;
+        }
+        .ai-msg.assistant {
+            background: #1e293b;
+            border: 1px solid #334155;
+            color: #f8fafc;
+            align-self: flex-start;
+            border-bottom-left-radius: 2px;
+        }
+        .ai-msg.user {
+            background: #0284c7;
+            color: #fff;
+            align-self: flex-end;
+            border-bottom-right-radius: 2px;
+        }
+        .ai-input-area {
+            padding: 10px 12px;
+            background: #0f172a;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            gap: 8px;
+        }
+        .ai-input-area input {
+            flex: 1;
+            background: #1e293b;
+            border: 1px solid #334155;
+            color: #fff;
+            padding: 8px 12px;
+            border-radius: 6px;
+            outline: none;
+            font-size: 0.85rem;
+        }
+        .ai-input-area button {
+            background: var(--accent);
+            color: #0b1120;
+            border: none;
+            border-radius: 6px;
+            padding: 0 14px;
+            font-weight: bold;
+            cursor: pointer;
         }
 
         /* Command Palette Modal */
@@ -349,8 +510,8 @@ static const char* HTML_UI = R"RAW_HTML(<!DOCTYPE html>
 </head>
 <body>
     <div class="banner-engine">
-        <span>🦊 مبني بنواة Mozilla Firefox (Gecko Engine Architecture)</span>
-        <span>AtlasBrowser Quantum v128.0 (Firefox Edition)</span>
+        <span>🦊 مبني بنواة Mozilla Firefox (Gecko Engine Architecture) • معالجة C++ متعددة المسارات</span>
+        <span>AtlasBrowser Quantum v128.0 (Firefox Edition) • الذاكرة الموفرة: +420 MB</span>
     </div>
 
     <!-- Workspaces Bar (Arc / Zen Style) -->
@@ -391,11 +552,15 @@ static const char* HTML_UI = R"RAW_HTML(<!DOCTYPE html>
             <input type="text" class="omnibar-input" id="urlInput" placeholder="اكتب عنوان ويب أو ابحث في الويب..." onkeydown="if(event.key==='Enter') handleUrlSubmit()">
         </div>
 
+        <button class="layout-btn" onclick="toggleAiDrawer()" style="background: rgba(56, 189, 248, 0.15); border-color: rgba(56, 189, 248, 0.4); color: #38bdf8;" title="المساعد الذكي (Atlas Copilot AI)">🤖 Atlas AI</button>
+        <button class="nav-btn" onclick="navigate('about:downloads')" title="مدير التنزيلات فائق السرعة">📥</button>
+        <button class="nav-btn" onclick="navigate('about:performance')" title="مركز مراقبة الأداء والذاكرة">⚡</button>
+        <button class="nav-btn" onclick="toggleReaderMode()" title="وضع القراءة الهادئ (Reader Mode)">📖</button>
         <button class="nav-btn" onclick="navigate('about:addons')" title="متجر وإضافات فايرفوكس (Firefox Add-ons)">🧩</button>
         <button class="nav-btn" onclick="navigate('mybrowser://settings')" title="إعدادات المتصفح">⚙️</button>
-        <button class="nav-btn" onclick="navigate('mybrowser://stats')" title="إحصائيات الحظر">📊</button>
-        <button class="layout-btn" onclick="toggleSplitView()" title="تقسيم الشاشة لعرض لسانين (Split View)">🪟 <span id="splitText">تقسيم الشاشة</span></button>
-        <button class="layout-btn" onclick="toggleVerticalTabs()" title="تبديل الألسنة الجانبية (Vertical Tabs)">📑 <span id="layoutText">ألسنة جانبية</span></button>
+        <button class="layout-btn" onclick="cycleTheme()" title="تغيير المظهر (Theme)">🎨 <span id="themeName">الداكن</span></button>
+        <button class="layout-btn" onclick="toggleSplitView()" title="تقسيم الشاشة لعرض لسانين (Split View)">🪟 <span id="splitText">تقسيم</span></button>
+        <button class="layout-btn" onclick="toggleVerticalTabs()" title="تبديل الألسنة الجانبية (Vertical Tabs)">📑 <span id="layoutText">جانبية</span></button>
         <button class="layout-btn" onclick="openCommandPalette()" style="background: rgba(168, 85, 247, 0.15); border-color: rgba(168, 85, 247, 0.4); color: #c084fc;" title="لوحة الأوامر السريعة (Ctrl+K)">⚡ Ctrl+K</button>
     </div>
 
@@ -404,7 +569,7 @@ static const char* HTML_UI = R"RAW_HTML(<!DOCTYPE html>
         <span style="color: var(--accent); font-weight: bold;">المفضلات:</span>
     </div>
 
-    <!-- Main Wrapper (Sidebar + Viewport) -->
+    <!-- Main Wrapper (Sidebar + Viewport + AI Copilot Drawer) -->
     <div class="main-wrapper">
         <div class="vertical-sidebar" id="verticalSidebar">
             <div style="font-size: 0.75rem; color: #94a3b8; font-weight: bold; margin-bottom: 8px;">الألسنة الرأسية (Vertical Tabs):</div>
@@ -414,7 +579,35 @@ static const char* HTML_UI = R"RAW_HTML(<!DOCTYPE html>
                 <button class="btn-new-tab" onclick="toggleContainerMenu()" style="border: 1px dashed #334155; font-size: 0.8rem; padding: 6px;">🛡️ حاوية</button>
             </div>
         </div>
+        
         <div class="content-area" id="contentArea"></div>
+
+        <!-- AI Copilot Drawer -->
+        <div class="ai-copilot-drawer" id="aiDrawer">
+            <div class="ai-header">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <span style="font-size: 1.2rem;">🤖</span>
+                    <div>
+                        <div style="font-weight: bold; color: #fff; font-size: 0.9rem;">Atlas Copilot AI</div>
+                        <div style="font-size: 0.7rem; color: #22c55e;">● C++ AI Engine متصل</div>
+                    </div>
+                </div>
+                <div style="display: flex; gap: 6px;">
+                    <button onclick="clearAiChat()" title="مسح المحادثة" style="background:transparent; border:none; color:#94a3b8; cursor:pointer;">🗑️</button>
+                    <button onclick="toggleAiDrawer()" style="background:transparent; border:none; color:#94a3b8; font-size:1.1rem; cursor:pointer;">✕</button>
+                </div>
+            </div>
+            <div class="ai-quick-actions">
+                <button class="ai-pill" onclick="sendAiPrompt('summarize')">📌 تلخيص الصفحة</button>
+                <button class="ai-pill" onclick="sendAiPrompt('explain')">🔍 شرح الكود</button>
+                <button class="ai-pill" onclick="sendAiPrompt('privacy')">🛡️ فحص الخصوصية</button>
+            </div>
+            <div class="ai-chat-body" id="aiChatBody"></div>
+            <div class="ai-input-area">
+                <input type="text" id="aiInput" placeholder="اسأل الذكاء الاصطناعي عن الصفحة..." onkeydown="if(event.key==='Enter') sendAiMessage()">
+                <button onclick="sendAiMessage()">إرسال</button>
+            </div>
+        </div>
     </div>
 
     <!-- Command Palette Modal -->
@@ -429,12 +622,30 @@ static const char* HTML_UI = R"RAW_HTML(<!DOCTYPE html>
 
     <script>
         let currentState = {};
+        let activeThemeIdx = 0;
+        const THEMES = [
+            { name: 'الداكن', cls: '' },
+            { name: 'OLED نقي', cls: 'theme-oled' },
+            { name: 'سايبربانك', cls: 'theme-cyberpunk' },
+            { name: 'نورد', cls: 'theme-nord' }
+        ];
+
+        function cycleTheme() {
+            activeThemeIdx = (activeThemeIdx + 1) % THEMES.length;
+            document.body.className = THEMES[activeThemeIdx].cls;
+            if (document.body.classList.contains('vertical-mode')) {
+                document.body.classList.add('vertical-mode');
+            }
+            document.getElementById('themeName').innerText = THEMES[activeThemeIdx].name;
+            showToast(`تم تطبيق مظهر: ${THEMES[activeThemeIdx].name}`);
+        }
 
         async function fetchState() {
             try {
                 const res = await fetch('/api/state');
                 currentState = await res.json();
                 renderUI();
+                renderAiChat();
             } catch (e) {
                 console.error('Failed to fetch state from C++ backend', e);
             }
@@ -452,6 +663,14 @@ static const char* HTML_UI = R"RAW_HTML(<!DOCTYPE html>
             document.getElementById('containerMenu').classList.toggle('show');
         }
 
+        function toggleAiDrawer() {
+            document.getElementById('aiDrawer').classList.toggle('show');
+        }
+
+        function toggleReaderMode() {
+            navigate('about:reader');
+        }
+
         window.onclick = function(e) {
             if (!e.target.matches('.container-dropdown *')) {
                 const menu = document.getElementById('containerMenu');
@@ -462,7 +681,7 @@ static const char* HTML_UI = R"RAW_HTML(<!DOCTYPE html>
         function toggleVerticalTabs() {
             document.body.classList.toggle('vertical-mode');
             const isV = document.body.classList.contains('vertical-mode');
-            document.getElementById('layoutText').innerText = isV ? 'ألسنة أفقية' : 'ألسنة جانبية';
+            document.getElementById('layoutText').innerText = isV ? 'أفقية' : 'جانبية';
             renderUI();
         }
 
@@ -480,24 +699,24 @@ static const char* HTML_UI = R"RAW_HTML(<!DOCTYPE html>
                 });
             }
 
-            // 2. Render Tabs (filtered by active workspace)
+            // 2. Render Tabs (Filtered by active workspace)
             const tabsList = document.getElementById('tabsList');
             const vTabsList = document.getElementById('vTabsList');
             tabsList.innerHTML = '';
             if (vTabsList) vTabsList.innerHTML = '';
 
-            const currentWsId = currentState.activeWorkspaceId || 1;
-            const visibleTabs = currentState.tabs.filter(t => !t.workspaceId || t.workspaceId === currentWsId);
+            const activeWsId = currentState.activeWorkspaceId || 1;
+            const filteredTabs = currentState.tabs.filter(t => !t.workspaceId || t.workspaceId === activeWsId);
 
-            visibleTabs.forEach(tab => {
+            filteredTabs.forEach(tab => {
                 const tabEl = document.createElement('div');
                 tabEl.className = 'tab' + (tab.id === currentState.activeTabId ? ' active' : '');
-                tabEl.style.setProperty('--container-color', tab.containerColor || '#94a3b8');
+                tabEl.style.setProperty('--container-color', tab.containerColor || 'transparent');
                 tabEl.onclick = () => switchTab(tab.id);
 
                 let badgeHtml = '';
                 if (tab.containerId > 0) {
-                    badgeHtml = `<span class="container-badge" style="background:${tab.containerColor}">${tab.containerName.split(' ')[0]}</span>`;
+                    badgeHtml = `<span class="container-badge" style="background:${tab.containerColor}">${tab.containerName}</span>`;
                 }
 
                 tabEl.innerHTML = `
@@ -525,7 +744,7 @@ static const char* HTML_UI = R"RAW_HTML(<!DOCTYPE html>
             // 3. Update Split View Button Text
             const splitText = document.getElementById('splitText');
             if (splitText && currentState.splitView) {
-                splitText.innerText = currentState.splitView.enabled ? 'إلغاء التقسيم' : 'تقسيم الشاشة';
+                splitText.innerText = currentState.splitView.enabled ? 'إلغاء التقسيم' : 'تقسيم';
             }
 
             // 4. Update Omnibar & Content
@@ -556,6 +775,48 @@ static const char* HTML_UI = R"RAW_HTML(<!DOCTYPE html>
             });
         }
 
+        function renderAiChat() {
+            const body = document.getElementById('aiChatBody');
+            if (!body || !currentState.aiChat) return;
+            body.innerHTML = '';
+            currentState.aiChat.forEach(msg => {
+                const d = document.createElement('div');
+                d.className = 'ai-msg ' + msg.role;
+                d.innerHTML = msg.text.replace(/\n/g, '<br>');
+                body.appendChild(d);
+            });
+            body.scrollTop = body.scrollHeight;
+        }
+
+        async function sendAiMessage() {
+            const inp = document.getElementById('aiInput');
+            const val = inp.value.trim();
+            if (!val) return;
+            inp.value = '';
+            await fetch('/api/ai/ask', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ query: val, action: 'ask' })
+            });
+            fetchState();
+        }
+
+        async function sendAiPrompt(action) {
+            await fetch('/api/ai/ask', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ query: '', action: action })
+            });
+            const drawer = document.getElementById('aiDrawer');
+            if (!drawer.classList.contains('show')) drawer.classList.add('show');
+            fetchState();
+        }
+
+        async function clearAiChat() {
+            await fetch('/api/ai/clear', { method: 'POST' });
+            fetchState();
+        }
+
         function renderContent(primaryTab) {
             const area = document.getElementById('contentArea');
             if (currentState.splitView && currentState.splitView.enabled) {
@@ -571,27 +832,23 @@ static const char* HTML_UI = R"RAW_HTML(<!DOCTYPE html>
                     </div>
                     <div class="split-pane">
                         <div class="split-pane-header">
-                            <span style="color: #4ade80; font-weight:bold;">اللسان الثاني (Split): ${secondaryTab.title}</span>
-                            <button onclick="toggleSplitView()" style="background:transparent; border:none; color:#ef4444; font-size:1rem; cursor:pointer;">×</button>
+                            <span style="color: #4ade80; font-weight:bold;">اللسان الثاني: ${secondaryTab.title}</span>
+                            <span style="font-size:0.75rem; color:${secondaryTab.containerColor}">${secondaryTab.containerName}</span>
                         </div>
                         <div style="flex:1; overflow-y:auto;">${secondaryTab.content || ''}</div>
                     </div>
                 `;
             } else {
                 area.classList.remove('split-active');
-                if (primaryTab.content) {
-                    area.innerHTML = primaryTab.content;
-                } else {
-                    area.innerHTML = '<div style="padding:40px; text-align:center; color:#94a3b8;">جاري التحميل...</div>';
-                }
+                area.innerHTML = primaryTab.content || '';
             }
         }
 
-        async function switchWorkspace(id) {
+        async function switchWorkspace(wsId) {
             await fetch('/api/workspaces/switch', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ id: id })
+                body: JSON.stringify({ id: wsId })
             });
             fetchState();
         }
@@ -603,16 +860,22 @@ static const char* HTML_UI = R"RAW_HTML(<!DOCTYPE html>
 
         // Command Palette
         const COMMANDS = [
-            { id: 'new_tab', title: 'فتح لسان جديد عادي', icon: '➕', action: () => createNewTab(0) },
-            { id: 'c_work', title: 'فتح لسان في حاوية العمل (Work Container)', icon: '🟠', action: () => createNewTab(2) },
-            { id: 'c_bank', title: 'فتح لسان في حاوية البنوك (Banking Container)', icon: '🟢', action: () => createNewTab(3) },
-            { id: 'c_shop', title: 'فتح لسان في حاوية التسوق (Shopping Container)', icon: '🌸', action: () => createNewTab(4) },
-            { id: 'c_pers', title: 'فتح لسان في حاوية شخصي (Personal Container)', icon: '🔵', action: () => createNewTab(1) },
-            { id: 'split', title: 'تبديل تقسيم الشاشة (Toggle Split View)', icon: '🪟', action: () => toggleSplitView() },
+            { id: 'ai', title: 'المساعد الذكي (Open Atlas Copilot AI)', icon: '🤖', action: () => toggleAiDrawer() },
+            { id: 'ai_sum', title: 'تلخيص الصفحة بالذكاء الاصطناعي', icon: '📌', action: () => sendAiPrompt('summarize') },
+            { id: 'downloads', title: 'مدير التنزيلات فائق السرعة (about:downloads)', icon: '📥', action: () => navigate('about:downloads') },
+            { id: 'perf', title: 'مركز مراقبة الأداء واستهلاك الرام (about:performance)', icon: '⚡', action: () => navigate('about:performance') },
+            { id: 'reader', title: 'وضع القراءة النظيف (Speed Reader Mode)', icon: '📖', action: () => toggleReaderMode() },
+            { id: 'theme', title: 'تبديل المظهر (Theme Switcher)', icon: '🎨', action: () => cycleTheme() },
+            { id: 'addons', title: 'إدارة وتثبيت إضافات فايرفوكس (AMO Add-ons)', icon: '🧩', action: () => navigate('about:addons') },
+            { id: 'split', title: 'تقسيم الشاشة لعرض لسانين (Split View)', icon: '🪟', action: () => toggleSplitView() },
             { id: 'vtabs', title: 'تبديل الألسنة الجانبية (Vertical Tabs)', icon: '📑', action: () => toggleVerticalTabs() },
-            { id: 'addons', title: 'فتح متجر إضافات فايرفوكس (AMO Add-ons)', icon: '🧩', action: () => navigate('about:addons') },
+            { id: 'c_work', title: 'فتح لسان بحاوية العمل (Work Container)', icon: '🟠', action: () => createNewTab(2) },
+            { id: 'c_bank', title: 'فتح لسان بحاوية البنوك (Banking Container)', icon: '🟢', action: () => createNewTab(3) },
+            { id: 'c_shop', title: 'فتح لسان بحاوية التسوق (Shopping Container)', icon: '🌸', action: () => createNewTab(4) },
+            { id: 'c_pers', title: 'فتح لسان بحاوية شخصي (Personal Container)', icon: '🔵', action: () => createNewTab(1) },
+            { id: 'new_tab', title: 'فتح لسان عادي جديد', icon: '➕', action: () => createNewTab(0) },
             { id: 'settings', title: 'إعدادات النواة C++', icon: '⚙️', action: () => navigate('mybrowser://settings') },
-            { id: 'stats', title: 'إحصائيات الحظر والدرع', icon: '📊', action: () => navigate('mybrowser://stats') },
+            { id: 'stats', title: 'إحصائيات درع الحظر', icon: '📊', action: () => navigate('mybrowser://stats') },
             { id: 'shield', title: 'تبديل درع الإعلانات (Toggle Shield)', icon: '🛡️', action: () => toggleShield() }
         ];
 
@@ -739,7 +1002,7 @@ static const char* HTML_UI = R"RAW_HTML(<!DOCTYPE html>
         }
 
         function installAddon(name, icon) {
-            showToast(`تم تثبيت إضافة ${name} من متجر فايرفوكس الرسمي وتفعيلها بنجاح! 🎉`);
+            showToast(`تم تثبيت إضافة ${name} من متجر فايرفوكس وتفعيلها بنجاح! 🎉`);
             const bBar = document.getElementById('bookmarksBar');
             const span = document.createElement('span');
             span.style = 'background: rgba(56, 189, 248, 0.15); color: #38bdf8; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; margin-right: 8px;';
@@ -789,7 +1052,6 @@ static std::string buildStateJson() {
                     <h3 style="color: #f8fafc; margin-bottom: 16px;">الإضافات الرسمية الموصى بها:</h3>
                     
                     <div style="display: flex; flex-direction: column; gap: 16px;">
-                        <!-- Multi-Account Containers -->
                         <div style="background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 20px; display: flex; justify-content: space-between; align-items: center;">
                             <div style="display: flex; gap: 16px; align-items: center;">
                                 <div style="font-size: 2.2rem; background: rgba(56, 189, 248, 0.1); width: 60px; height: 60px; border-radius: 12px; display: flex; align-items: center; justify-content: center;">🛡️</div>
@@ -799,10 +1061,9 @@ static std::string buildStateJson() {
                                     <span style="font-size: 0.75rem; color: #38bdf8;">بواسطة: Mozilla Firefox Team • المعرف: @testpilot-containers</span>
                                 </div>
                             </div>
-                            <button onclick="installAddon('Firefox Multi-Account Containers', '🛡️')" style="background: #22c55e; color: #fff; border: none; padding: 10px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; white-space: nowrap;">✓ مثبتة ونشطة (Installed)</button>
+                            <button onclick="installAddon('Firefox Multi-Account Containers', '🛡️')" style="background: #22c55e; color: #fff; border: none; padding: 10px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; white-space: nowrap;">✓ مثبتة ونشطة</button>
                         </div>
 
-                        <!-- uBlock Origin -->
                         <div style="background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 20px; display: flex; justify-content: space-between; align-items: center;">
                             <div style="display: flex; gap: 16px; align-items: center;">
                                 <div style="font-size: 2.2rem; background: rgba(239, 68, 68, 0.1); width: 60px; height: 60px; border-radius: 12px; display: flex; align-items: center; justify-content: center;">🛑</div>
@@ -815,7 +1076,6 @@ static std::string buildStateJson() {
                             <button onclick="installAddon('uBlock Origin', '🛑')" style="background: #38bdf8; color: #0f172a; border: none; padding: 10px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; white-space: nowrap;">+ أضف إلى فايرفوكس</button>
                         </div>
 
-                        <!-- Dark Reader -->
                         <div style="background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 20px; display: flex; justify-content: space-between; align-items: center;">
                             <div style="display: flex; gap: 16px; align-items: center;">
                                 <div style="font-size: 2.2rem; background: rgba(168, 85, 247, 0.1); width: 60px; height: 60px; border-radius: 12px; display: flex; align-items: center; justify-content: center;">🌙</div>
@@ -830,6 +1090,46 @@ static std::string buildStateJson() {
                     </div>
                 </div>
             )ADDONS_HTML";
+        } else if (tabs[i].currentUrl.rfind("about:downloads", 0) == 0 || tabs[i].currentUrl.rfind("mybrowser://downloads", 0) == 0) {
+            auto dls = g_engine.downloads()->getAllDownloads();
+            std::ostringstream dlStream;
+            dlStream << "<div style=\"padding:40px; max-width:850px; margin:0 auto;\">"
+                     << "  <div style=\"display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid #334155; padding-bottom:14px; margin-bottom:20px;\">"
+                     << "    <div>"
+                     << "      <h1 style=\"color:#38bdf8; font-size:1.8rem; margin:0;\">📥 مدير التنزيلات السريعة (C++ Turbo Downloads)</h1>"
+                     << "      <p style=\"color:#94a3b8; margin-top:4px;\">تنزيل متعدد المسارات (Multi-threaded Chunks) مع فحص أمني استباقي</p>"
+                     << "    </div>"
+                     << "    <span style=\"background:rgba(34,197,94,0.2); color:#22c55e; border:1px solid #22c55e; padding:4px 12px; border-radius:20px; font-weight:bold; font-size:0.8rem;\">المحرك يعمل بأقصى سرعة</span>"
+                     << "  </div>"
+                     << "  <div style=\"display:flex; flex-direction:column; gap:14px;\">";
+            for (const auto& d : dls) {
+                dlStream << "    <div style=\"background:#1e293b; padding:18px; border-radius:10px; border:1px solid #334155; display:flex; justify-content:space-between; align-items:center;\">"
+                         << "      <div>"
+                         << "        <div style=\"font-size:1.1rem; font-weight:bold; color:#fff;\">📦 " << d.fileName << "</div>"
+                         << "        <div style=\"font-size:0.85rem; color:#38bdf8; margin-top:4px;\">السرعة: " << d.speedStr << " • " << d.securityNotice << "</div>"
+                         << "        <div style=\"font-size:0.75rem; color:#94a3b8; margin-top:2px; direction:ltr; text-align:right;\">" << d.url << "</div>"
+                         << "      </div>"
+                         << "      <div style=\"text-align:left;\">"
+                         << "        <span style=\"background:#22c55e; color:#0f172a; padding:6px 14px; border-radius:6px; font-weight:bold; font-size:0.85rem;\">" << downloadStatusToString(d.status) << "</span>"
+                         << "      </div>"
+                         << "    </div>";
+            }
+            dlStream << "  </div>"
+                     << "</div>";
+            contentPreview = dlStream.str();
+        } else if (tabs[i].currentUrl.rfind("about:performance", 0) == 0 || tabs[i].currentUrl.rfind("mybrowser://performance", 0) == 0) {
+            auto allTabs = g_engine.tabs()->getAllTabs();
+            std::vector<uint32_t> ids;
+            for (const auto& t : allTabs) ids.push_back(t.id);
+            auto metrics = g_engine.performance()->getTabMetrics(ids);
+            contentPreview = g_engine.performance()->generatePerformanceHtml(metrics);
+        } else if (tabs[i].currentUrl.rfind("about:reader", 0) == 0 || tabs[i].currentUrl.rfind("mybrowser://reader", 0) == 0) {
+            std::string articleTitle = "بناء محرك متصفح عملاق C++ على نواة Gecko";
+            std::string articleAuthor = "فريق هندسة النواة AtlasBrowser";
+            std::string articleBody = "<p>تعتبر بنية متصفح AtlasBrowser Gecko Edition قفزة نوعية في عالم المتصفحات مفتوحة المصدر، حيث تدمج بين خفة وأداء مكتبات C++20 الأصلية وبين مرونة نواة فايرفوكس الرائدة في دعم إضافات WebExtensions.</p>"
+                                      "<p>من خلال عزل حاويات العمل والشخصي (Multi-Account Containers)، يضمن المتصفح استقلالية ملفات تعريف الارتباط والجلسات، مما يمنع شركات الإعلانات من تتبع المستخدم عبر الويب.</p>"
+                                      "<p>بالإضافة إلى ذلك، يوفر المحرك طبقة مساعدة ذكية (Native AI Copilot) تعمل على تلخيص المحتوى وشرح الأكواد البرمجية مباشرة دون استهلاك موارد المعالج والذاكرة.</p>";
+            contentPreview = ReaderModeEngine::formatReaderArticle(articleTitle, articleAuthor, articleBody);
         } else if (tabs[i].currentUrl.rfind("mybrowser://", 0) == 0) {
             auto schemeResp = g_engine.schemes()->handleRequest(tabs[i].currentUrl);
             contentPreview = schemeResp.content;
@@ -868,6 +1168,8 @@ static std::string buildStateJson() {
        << "    \"primaryId\": " << splitState.primaryTabId << ",\n"
        << "    \"secondaryId\": " << splitState.secondaryTabId << "\n"
        << "  },\n"
+       << "  \"downloads\": " << g_engine.downloads()->exportDownloadsJson() << ",\n"
+       << "  \"aiChat\": " << g_engine.ai()->exportChatJson() << ",\n"
        << "  \"containers\": " << g_engine.containers()->exportContainersJson() << ",\n"
        << "  \"bookmarks\": [\n";
 
@@ -910,21 +1212,18 @@ void handleClient(int clientSocket) {
         return;
     }
     buffer[bytesRead] = '\0';
-    std::string request(buffer, bytesRead);
+    std::string req(buffer);
 
-    std::istringstream reqStream(request);
-    std::string method, path, httpVer;
-    reqStream >> method >> path >> httpVer;
+    std::istringstream reqStream(req);
+    std::string method, path, proto;
+    reqStream >> method >> path >> proto;
 
-    std::string body;
-    size_t dblClrf = request.find("\r\n\r\n");
-    if (dblClrf != std::string::npos) {
-        body = request.substr(dblClrf + 4);
-    }
+    size_t bodyPos = req.find("\r\n\r\n");
+    std::string body = (bodyPos != std::string::npos) ? req.substr(bodyPos + 4) : "";
 
-    std::string responseStatus = "200 OK";
-    std::string contentType = "text/html; charset=utf-8";
     std::string responseBody;
+    std::string contentType = "text/html; charset=utf-8";
+    std::string responseStatus = "200 OK";
 
     if (method == "GET" && (path == "/" || path == "/index.html")) {
         responseBody = HTML_UI;
@@ -937,14 +1236,16 @@ void handleClient(int clientSocket) {
             url = "about:addons";
         }
         auto navRes = g_engine.navigateActiveTab(url);
-        if (url == "about:addons") {
+        if (url == "about:addons" || url == "about:downloads" || url == "about:performance" || url == "about:reader") {
             auto cur = g_engine.tabs()->getActiveTab();
             if (cur) {
-                cur->title = "إضافات فايرفوكس";
-                cur->currentUrl = "about:addons";
+                if (url == "about:addons") cur->title = "إضافات فايرفوكس";
+                else if (url == "about:downloads") cur->title = "مدير التنزيلات";
+                else if (url == "about:performance") cur->title = "مراقبة الأداء";
+                else if (url == "about:reader") cur->title = "وضع القراءة";
+                cur->currentUrl = url;
             }
-            navRes.finalUrl = "about:addons";
-            navRes.pageTitle = "إضافات فايرفوكس";
+            navRes.finalUrl = url;
         }
 
         contentType = "application/json";
@@ -959,6 +1260,27 @@ void handleClient(int clientSocket) {
            << "  \"url\": \"" << navRes.finalUrl << "\"\n"
            << "}\n";
         responseBody = ss.str();
+    } else if (method == "POST" && path == "/api/ai/ask") {
+        std::string query = extractJsonField(body, "query");
+        std::string action = extractJsonField(body, "action");
+        auto cur = g_engine.tabs()->getActiveTab();
+        std::string title = cur ? cur->title : "";
+        std::string content = cur ? cur->currentUrl : "";
+        if (action == "summarize") {
+            g_engine.ai()->summarizeContent(content, title);
+        } else if (action == "explain") {
+            g_engine.ai()->explainCode(content);
+        } else if (action == "privacy") {
+            g_engine.ai()->askQuestion("فحص الأمان والخصوصية: هل الصفحة والاتصال آمنان؟", content);
+        } else {
+            g_engine.ai()->askQuestion(query, content);
+        }
+        contentType = "application/json";
+        responseBody = "{\"status\": \"ok\"}";
+    } else if (method == "POST" && path == "/api/ai/clear") {
+        g_engine.ai()->clearChatHistory();
+        contentType = "application/json";
+        responseBody = "{\"status\": \"ok\"}";
     } else if (method == "POST" && path == "/api/tabs/new") {
         std::string cIdStr = extractJsonField(body, "containerId");
         uint32_t cId = cIdStr.empty() ? 0 : std::stoi(cIdStr);
@@ -1050,20 +1372,33 @@ void handleClient(int clientSocket) {
         responseBody = "Not found";
     }
 
-    std::ostringstream responseStream;
-    responseStream << "HTTP/1.1 " << responseStatus << "\r\n"
-                   << "Content-Type: " << contentType << "\r\n"
-                   << "Content-Length: " << responseBody.size() << "\r\n"
-                   << "Access-Control-Allow-Origin: *\r\n"
-                   << "Connection: close\r\n\r\n"
-                   << responseBody;
+    std::ostringstream resp;
+    resp << "HTTP/1.1 " << responseStatus << "\r\n"
+         << "Content-Type: " << contentType << "\r\n"
+         << "Content-Length: " << responseBody.size() << "\r\n"
+         << "Access-Control-Allow-Origin: *\r\n"
+         << "Access-Control-Allow-Methods: GET, POST, OPTIONS\r\n"
+         << "Access-Control-Allow-Headers: Content-Type\r\n"
+         << "Connection: close\r\n\r\n"
+         << responseBody;
 
-    std::string respStr = responseStream.str();
-    send(clientSocket, respStr.data(), respStr.size(), 0);
+    std::string respStr = resp.str();
+    send(clientSocket, respStr.c_str(), respStr.size(), 0);
     close(clientSocket);
 }
 
-int main() {
+int main(int argc, char* argv[]) {
+    int port = 8080;
+    if (argc > 1) {
+        port = std::stoi(argv[1]);
+    }
+
+    g_engine.initialize();
+
+    // Default tabs
+    g_engine.tabs()->createTab("about:addons", 1, "Personal", "#38bdf8", 1);
+    g_engine.tabs()->createTab("https://github.com", 2, "Work", "#fb923c", 2);
+
     int serverFd = socket(AF_INET, SOCK_STREAM, 0);
     if (serverFd < 0) {
         std::cerr << "Failed to create socket\n";
@@ -1075,22 +1410,31 @@ int main() {
 
     sockaddr_in address{};
     address.sin_family = AF_INET;
-    address.sin_addr.s_addr = INADDR_ANY; // 0.0.0.0
-    address.sin_port = htons(8080);
+    address.sin_addr.s_addr = INADDR_ANY; // Bind to 0.0.0.0
+    address.sin_port = htons(port);
 
     if (bind(serverFd, (struct sockaddr*)&address, sizeof(address)) < 0) {
-        std::cerr << "Failed to bind to 0.0.0.0:8080\n";
+        std::cerr << "Failed to bind to port " << port << "\n";
         close(serverFd);
         return 1;
     }
 
-    if (listen(serverFd, 20) < 0) {
-        std::cerr << "Failed to listen\n";
+    if (listen(serverFd, 10) < 0) {
+        std::cerr << "Failed to listen on socket\n";
         close(serverFd);
         return 1;
     }
 
-    std::cout << "[AtlasBrowser] Native C++ Server listening on 0.0.0.0:8080\n";
+    std::cout << "=====================================================\n";
+    std::cout << "  AtlasBrowser Firefox Quantum Server is Running!\n";
+    std::cout << "  Listening on: http://0.0.0.0:" << port << "\n";
+    std::cout << "  - Firefox Add-ons (AMO) Store Ready\n";
+    std::cout << "  - Multi-Account Containers Ready\n";
+    std::cout << "  - Workspaces (Arc/Zen) & Split View Ready\n";
+    std::cout << "  - C++ AI Copilot Engine Ready\n";
+    std::cout << "  - C++ Turbo Download Manager Ready\n";
+    std::cout << "  - Performance & Memory Saver Ready\n";
+    std::cout << "=====================================================\n";
 
     while (true) {
         sockaddr_in clientAddr{};

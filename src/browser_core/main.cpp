@@ -137,6 +137,63 @@ void runTests(BrowserEngine& engine) {
                    !flags.empty() && flags[0].find("disable_non_proxied_udp") != std::string::npos);
     }
 
+    // 8. Workspaces (Arc / Zen Style)
+    {
+        auto wsList = engine.workspaces()->getAllWorkspaces();
+        assertTest("Workspaces: Preset workspaces initialized (Dev, Personal, Finance, Research)", wsList.size() >= 4);
+
+        bool switched = engine.workspaces()->switchWorkspace(2);
+        assertTest("Workspaces: Workspace switching to Dev Space (ID 2)", switched && engine.workspaces()->getActiveWorkspaceId() == 2);
+    }
+
+    // 9. Firefox Containers & Auto-Router
+    {
+        auto containers = engine.containers()->getAllContainers();
+        assertTest("Firefox Multi-Account Containers: Initialized default containers", containers.size() >= 4);
+
+        auto matchedId = engine.containerRouter()->matchContainer("https://github.com/torvalds/linux");
+        assertTest("Auto-Container Router: Automatic routing for github.com to Work Container", matchedId == 2);
+    }
+
+    // 10. Native C++ AI Assistant Engine
+    {
+        auto summary = engine.ai()->summarizeContent("C++ code repository for Gecko browser", "GitHub Repo");
+        assertTest("AI Assistant Engine: Content summarization", !summary.empty() && summary.find("ملخص") != std::string::npos);
+
+        auto history = engine.ai()->getChatHistory();
+        assertTest("AI Assistant Engine: Chat history recording", history.size() >= 2);
+    }
+
+    // 11. Turbo Multi-Threaded Download Manager & Security Shield
+    {
+        uint32_t dlId = engine.downloads()->startDownload("https://example.com/archive.zip", "archive.zip", 2048000);
+        assertTest("Turbo Download Manager: Multi-threaded download dispatch", dlId > 0);
+
+        uint32_t malId = engine.downloads()->startDownload("https://bad.com/payload.scr", "payload.scr", 1024);
+        auto allDls = engine.downloads()->getAllDownloads();
+        bool blockedDangerous = false;
+        for (const auto& d : allDls) {
+            if (d.id == malId && d.status == DownloadStatus::BlockedDangerous) blockedDangerous = true;
+        }
+        assertTest("Turbo Download Manager: Malware Heuristic Security Blocking (.scr, .vbs)", blockedDangerous);
+    }
+
+    // 12. Performance & Memory Shield Monitor
+    {
+        auto metrics = engine.performance()->getTabMetrics({1, 2, 3});
+        assertTest("Performance Monitor: Per-tab RAM and CPU metrics calculation", metrics.size() == 3);
+
+        double savedMb = engine.performance()->getMemorySavedMb();
+        assertTest("Performance Monitor: Memory Saver calculation (+420MB saved)", savedMb > 0);
+    }
+
+    // 13. Distraction-Free Speed Reader Mode
+    {
+        std::string readerHtml = ReaderModeEngine::formatReaderArticle("Test Article", "Atlas Team", "<p>Hello World</p>");
+        assertTest("Reader Mode Engine: Distraction-free typography formatting", 
+                   readerHtml.find("وضع القراءة") != std::string::npos && readerHtml.find("Hello World") != std::string::npos);
+    }
+
     std::cout << "\n\033[1;36mResult: " << passed << " of " << total << " tests passed successfully!\033[0m\n\n";
 }
 

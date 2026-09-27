@@ -11,6 +11,10 @@
 #include "ContainerManager.hpp"
 #include "AutoContainerRouter.hpp"
 #include "WorkspaceManager.hpp"
+#include "AiAssistantEngine.hpp"
+#include "DownloadManager.hpp"
+#include "PerformanceMonitor.hpp"
+#include "ReaderModeEngine.hpp"
 #include <memory>
 #include <string>
 
@@ -48,6 +52,9 @@ public:
     std::shared_ptr<ContainerManager> containers() const { return m_containerManager; }
     std::shared_ptr<AutoContainerRouter> containerRouter() const { return m_containerRouter; }
     std::shared_ptr<WorkspaceManager> workspaces() const { return m_workspaceManager; }
+    std::shared_ptr<AiAssistantEngine> ai() const { return m_aiEngine; }
+    std::shared_ptr<DownloadManager> downloads() const { return m_downloadManager; }
+    std::shared_ptr<PerformanceMonitor> performance() const { return m_perfMonitor; }
     std::shared_ptr<AdBlocker> adBlocker() const { return m_adBlocker; }
     std::shared_ptr<NetworkInterceptor> network() const { return m_networkInterceptor; }
     std::shared_ptr<SchemeHandlerRegistry> schemes() const { return m_schemeRegistry; }
@@ -76,6 +83,9 @@ private:
     std::shared_ptr<ContainerManager> m_containerManager;
     std::shared_ptr<AutoContainerRouter> m_containerRouter;
     std::shared_ptr<WorkspaceManager> m_workspaceManager;
+    std::shared_ptr<AiAssistantEngine> m_aiEngine;
+    std::shared_ptr<DownloadManager> m_downloadManager;
+    std::shared_ptr<PerformanceMonitor> m_perfMonitor;
     bool m_initialized = false;
 };
 

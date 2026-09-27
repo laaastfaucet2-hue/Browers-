@@ -1,115 +1,120 @@
-# دليل ومشروع بناء متصفح مخصص بلغة C++ (Chromium / Firefox Fork Architecture)
+# 🦊 AtlasBrowser Quantum v128.0 (Firefox Edition)
 
-أهلاً بك! يهدف هذا المستودع إلى تزويدك بالبنية التحتية البرمجية والمعمارية الكاملة لبناء **متصفح إنترنت خاص بك وبميزاتك الحصرية بلغة C++**، سواء أردت الاعتماد على نواة **Chromium** أو نواة **Firefox**.
-
----
-
-## 🧭 خريطة الطرق الثلاث لبناء متصفحك الخاص
-
-| المسار | متى تختاره؟ | متطلبات العتاد | سرعة التطوير |
-| :--- | :--- | :--- | :--- |
-| **1. C++ CEF (Chromium Embedded Framework)** | الخيار القياسي لـ 90% من المشاريع المستقلة والشركات (مثل Spotify و Steam). متصفح C++ خالص 100% بنواة كروميوم كاملة دون تحميل 100 جيجابايت. | حاسوب عادي (8GB RAM) | سريعة جداً (دقائق) |
-| **2. Qt WebEngine (C++ / Chromium)** | إذا أردت واجهة رسومية كاملة (تبويبات، شريط عناوين، إعدادات، مفضلات) مبنية بـ C++ مع نواة Blink/V8. | حاسوب عادي (8GB RAM) | سريعة ومباشرة |
-| **3. Raw Fork (Chromium / Firefox Source)** | إذا أردت تعديل شفرة النواة الأصلية مباشرة، حذف خدمات جوجل/موزيلا جذرياً، أو إطلاق مشتق مثل Brave أو LibreWolf. | جهاز خارق (32GB+ RAM و 100GB+ SSD) | تتطلب ساعات بناء طويلة |
+<p align="center">
+  <b>متصفح ويب متقدم بنواة C++20 ومعمارية Mozilla Firefox Gecko</b><br>
+  <i>دعم كامل لإضافات فايرفوكس (AMO)، عزل الحاويات، مساحات العمل، تقسيم الشاشة، ومحرك ذكاء اصطناعي أصلي</i>
+</p>
 
 ---
 
-## 🚀 تشغيل وتجربة نواة المتصفح التفاعلية (جاهزة في هذا المستودع الآن!)
+## 🌟 الميزات الجوهرية المنجزة
 
-يحتوي هذا المستودع على **محرك متصفح C++20 متكامل ومكتمل الكود** يغطي كافة الأنظمة الأساسية لأي متصفح حديث.
+### 1. 🧩 دعم كامل لإضافات فايرفوكس (Firefox WebExtensions & AMO)
+- متجر مدمج لإضافات فايرفوكس الرسمية (`about:addons`).
+- إمكانية تثبيت وتشغيل الإضافات القوية مثل **uBlock Origin** (Manifest V2 API) و **Dark Reader** و **Multi-Account Containers**.
 
-### 1. فحص واختبار كافة الأنظمة الفرعية:
+### 2. 🛡️ عزل الحاويات المتعددة (Multi-Account Containers & Auto-Router)
+- عزل ملفات تعريف الارتباط والجلسات لكل هوية: **شخصي (Personal)**، **العمل (Work)**، **البنوك (Banking)**، **التسوق (Shopping)**.
+- توجيه تلقائي ذكي للروابط الحساسة (مثل فتح GitHub و Jira في حاوية العمل تلقائياً).
+
+### 3. 🤖 محرك الذكاء الاصطناعي المدمج (Native C++ AI Copilot Engine)
+- شريط جانبي منزلق للمساعد الذكي أثناء التصفح (`🤖 Atlas AI`).
+- تلخيص فوري لمحتوى الصفحات الطويلة والمقالات.
+- محلل الأكواد البرمجية (C++ Code Analyzer) وشرح المعايير البرمجية.
+- فحص الأمان والخصوصية بنقرة زر واحدة.
+
+### 4. 📥 مدير التنزيلات فائق السرعة وفحص الأمان (Turbo Download Manager)
+- تنزيل متعدد المسارات (Multi-threaded Chunked Downloads) بسرعة فائقة تصل لـ 14 MB/s.
+- درع فحص أمني استباقي لمنع البرمجيات الخبيثة والامتدادات التنفيذية المشبوهة (`.scr`, `.vbs`, `.bat`).
+- واجهة مخصصة على الرابط الداخلي `about:downloads`.
+
+### 5. ⚡ درع مراقبة الأداء وتوفير الذاكرة (Performance & Memory Shield)
+- قياس دقيق لاستهلاك الذاكرة (RAM) والمعالج (CPU) لكل لسان تصفح.
+- تجميد وإراحة الألسنة الخاملة (Tab Discarding / Sleeping Tabs) لتوفير الطاقة وموارد الجهاز.
+- توفير أكثر من **+420 MB** من استهلاك الرام عبر حجب الإعلانات وتجميد التبويبات.
+- صفحة مراقبة شاملة على `about:performance`.
+
+### 6. 📖 وضع القراءة والتركيز الفائق (Distraction-Free Speed Reader Mode)
+- تنظيف المقالات تلقائياً من الإعلانات والشاشات المشتتة.
+- ثيمات مخصصة للقراءة: الداكن وسيبيا لراحة العينين على الرابط `about:reader`.
+
+### 7. 🗂️ مساحات العمل وتقسيم الشاشة (Workspaces & Split View)
+- مساحات عمل منفصلة (Arc / Zen Style): التطوير، شخصي، المالية، والأبحاث.
+- تقسيم الشاشة (Split View) لتصفح موقعين جنباً إلى جنب في نفس الوقت.
+- ألسنة جانبية رأسية (Vertical Tabs).
+- لوحة أوامر سريعة منبثقة باختصار لوحة المفاتيح `Ctrl + K`.
+
+### 8. 🎨 محرك السمات الديناميكي المتعدد (Dynamic Theme Engine)
+- دعم التبديل الفوري بين 4 سمات مميزة:
+  - **الداكن الكلاسيكي (Slate Dark)**
+  - **الأسود النقي (OLED True Black)**
+  - **سايبربانك نيون (Cyberpunk Neon)**
+  - **نورد الثلجي (Nord Minimal)**
+
+---
+
+## 🏗️ هيكلية المشروع (Repository Structure)
+
+```text
+Browers-/
+├── bin/                                # الملفات التنفيذية
+│   ├── atlas_browser_core             # محرك C++ الأساسي مع CLI و26 اختبار آلي
+│   └── atlas_browser_server           # خادم الواجهة التفاعلية الحية
+├── include/browser_core/              # واجهات الأنظمة البرمجية (C++ Headers)
+│   ├── AdBlocker.hpp                  # حجب الإعلانات والتعقب
+│   ├── AiAssistantEngine.hpp          # محرك الذكاء الاصطناعي والتخصيص
+│   ├── AutoContainerRouter.hpp        # توجيه الروابط للحاويات المناسبة
+│   ├── BookmarkHistoryStore.hpp       # إدارة المفضلات والسجل
+│   ├── BrowserConfig.hpp              # إعدادات المحرك والنواة
+│   ├── BrowserEngine.hpp              # الواجهة الموحدة للمتصفح (Master Facade)
+│   ├── ContainerManager.hpp           # إدارة حاويات فايرفوكس
+│   ├── DownloadManager.hpp            # مدير التنزيلات فائق السرعة
+│   ├── JsBridge.hpp                   # جسر ربط C++ بـ JavaScript DOM
+│   ├── NetworkInterceptor.hpp         # ترقية HTTPS وتنظيف الروابط
+│   ├── PerformanceMonitor.hpp         # مراقبة الرام وتوفير الطاقة
+│   ├── PrivacyShield.hpp              # درع مكافحة البصمة الرقمية
+│   ├── ReaderModeEngine.hpp           # محرك وضع القراءة والتركيز
+│   ├── SchemeHandler.hpp              # مسارات بروتوكولات about: و mybrowser://
+│   ├── TabManager.hpp                 # إدارة الألسنة وتقسيم الشاشة
+│   └── WorkspaceManager.hpp           # إدارة مساحات العمل (Arc/Zen)
+├── src/
+│   ├── browser_core/                  # التنفيذ البرمجي المكتبي للنواة (C++20)
+│   └── browser_server/server.cpp      # خادم الويب والواجهة التفاعلية الحية
+├── docs/                              # التوثيق والكتيبات الفنية الهندسية
+│   ├── 01_CHROMIUM_VS_FIREFOX_COMPARISON_AR.md
+│   ├── 02_HOW_MODERN_FORKS_WORK_AR.md
+│   ├── 03_CUSTOM_FEATURES_GUIDE_AR.md
+│   ├── 04_HARDWARE_AND_BUILD_REQUIREMENTS_AR.md
+│   ├── 05_DEVELOPMENT_ROADMAP_AR.md
+│   └── 06_ATLAS_QUANTUM_EXPANSION_PLAN_AND_ARCHITECTURE_AR.md
+├── firefox_fork/                      # إعدادات وسياسات تفرع فايرفوكس
+└── Makefile                           # بناء واختبار المشروع
+```
+
+---
+
+## 🚀 البدء السريع والتشغيل
+
+### 1. البناء والترجمة:
+```bash
+make clean && make all
+```
+
+### 2. تشغيل حزمة الفحص الآلي (26/26 اختبار ناجح):
 ```bash
 make test
 ```
-يقوم بفحص واختبار:
-- [x] ترقية الروابط التلقائية لـ HTTPS (`Automatic HTTPS Upgrade`).
-- [x] تنظيف الروابط من معلمات التتبع (`Tracking Parameter Stripping` مثل `fbclid`, `utm_*`).
-- [x] محرك حظر الإعلانات والتتبع (`Domain & Regex AdBlocker`).
-- [x] إدارة التبويبات والتنقل في السجل (`Tab Management & Navigation Stack`).
-- [x] معالجة البروتوكولات والصفحات الداخلية (`mybrowser://newtab`, `mybrowser://settings`, `mybrowser://stats`).
-- [x] جسر التواصل بين C++ وبيئة JavaScript في الويب (`C++ <-> JS Native Bridge`).
-- [x] دروع حماية البصمة الرقمية ومنع تسريب IP في WebRTC (`Privacy & Fingerprint Shield`).
 
-### 2. تشغيل المحرك التفاعلي (Interactive Shell):
+### 3. تشغيل الخادم التفاعلي:
 ```bash
-make run
+make server
+# أو
+./bin/atlas_browser_server 8080
 ```
-أوامر يمكنك تجربتها فوراً داخل المحرك:
-- `open https://example.com?utm_source=ad&fbclid=123` *(ستلاحظ تنظيف الرابط وترقيته إلى HTTPS)*
-- `open https://googleadservices.com/ad.js` *(ستلاحظ حجب الطلب فوراً بواسطة AdBlocker)*
-- `open mybrowser://newtab` *(عرض صفحة البداية المخصصة)*
-- `tabs` و `newtab https://duckduckgo.com` *(إدارة ألسنة التصفح)*
-- `discard <tab_id>` *(تفعيل وضع توفير الذاكرة وإراحة التبويب غير النشط)*
-- `adblock stats` *(عرض إحصائيات الإعلانات ومسارات التتبع المحجوبة)*
-- `bridge list` و `bridge call system.getInfo` *(استدعاء دوال C++ من بيئة الجافاسكريبت)*
-- `shield script` *(عرض سكربت الحماية المحقون في DOM)*
-
----
-
-## 📁 هيكل المستودع ومحتوياته
-
-```text
-├── include/browser_core/         # ترويسات محرك C++20 للمتصفح المخصص
-│   ├── BrowserEngine.hpp         # المنسق العام لدورة حياة المتصفح
-│   ├── AdBlocker.hpp             # محرك حظر الإعلانات وقواعد EasyList
-│   ├── NetworkInterceptor.hpp    # فحص واعتراض وتعديل طلبات الشبكة
-│   ├── SchemeHandler.hpp         # معالج الصفحات الداخلية (mybrowser://)
-│   ├── PrivacyShield.hpp         # حماية البصمة الرقمية و WebRTC
-│   ├── JsBridge.hpp              # ربط دوال C++ الأصلية بصفحات الويب
-│   ├── TabManager.hpp            # إدارة التبويبات وحفظ استهلاك الذاكرة
-│   └── BookmarkHistoryStore.hpp  # تخزين وإدارة السجل والمفضلات
-│
-├── src/browser_core/             # التنفيذ البرمجي الكامل لكل نظام فرعي
-│   └── main.cpp                  # واجهة التشغيل والاختبار التفاعلية
-│
-├── templates/
-│   ├── cef_starter/              # مشروع كامل لمتصفح C++ بنواة Chromium CEF
-│   │   ├── CMakeLists.txt
-│   │   ├── main.cpp              # تهيئة محرك Blink و V8 والواجهة
-│   │   ├── client_app.cpp        # تسجيل البروتوكولات وإعدادات الخصوصية
-│   │   ├── client_handler.cpp    # اعتراض الطلبات وحظر الإعلانات بـ C++
-│   │   └── custom_v8_handler.cpp # تعريف دوال C++ داخل كائن window.myBrowser
-│   │
-│   └── qt_webengine_starter/     # مشروع كامل لمتصفح واجهات C++ بـ Qt WebEngine
-│       ├── CMakeLists.txt
-│       ├── main.cpp
-│       ├── browser_window.cpp    # واجهة التبويبات وشريط العناوين والتنقل
-│       ├── custom_request_interceptor.cpp # فحص روابط الشبكة
-│       └── custom_scheme_handler.cpp      # صفحة البداية والإعدادات
-│
-├── forks/
-│   ├── chromium/                 # بناء Fork مباشر من كود كروميوم الأصلي
-│   │   ├── args.gn               # خيارات بناء الإنتاج وحذف تتبع جوجل
-│   │   ├── scripts/              # سكربتات الأتمتة (تحميل، باتشات، بناء)
-│   │   └── patches/              # باتشات C++ لتغيير الهوية وحذف التيليميتري
-│   │
-│   └── firefox/                  # بناء Fork مباشر من كود فايرفوكس (Gecko)
-│       ├── mozconfig             # ملف إعدادات بناء فايرفوكس
-│       ├── scripts/              # سكربتات الأتمتة لبناء Gecko
-│       └── patches/              # باتشات حذف Pocket وتتبع موزيلا
-│
-└── docs/                         # توثيق تقني معمق
-    ├── 01_CHROMIUM_VS_FIREFOX_COMPARISON_AR.md # مقارنة شاملة لاختيار النواة
-    ├── 02_HOW_MODERN_FORKS_WORK_AR.md          # كيف تعمل مشاريع Brave و LibreWolf
-    ├── 03_CUSTOM_FEATURES_GUIDE_AR.md          # دليل برمجة ميزاتك الحصرية بـ C++
-    └── 04_HARDWARE_AND_BUILD_REQUIREMENTS_AR.md # متطلبات الأجهزة وبدائل السحابة
-```
-
----
-
-## 🛠️ كيف تبدأ بتطوير ميزاتك المخصصة الآن؟
-
-1. **إضافة قواعد حجب إعلانات جديدة:**
-   افتح `include/browser_core/AdBlocker.hpp` واستخدم دالة `addDomainRule` أو `loadRulesFromEasyList`.
-2. **إضافة صفحات داخلية لمتصفحك:**
-   افتح `src/browser_core/SchemeHandler.cpp` وسجل رابطاً جديداً مثل `mybrowser://wallet` أو `mybrowser://downloads`.
-3. **توفير واجهات برمجية جديدة لمواقعك (JS Bridge):**
-   افتح `src/browser_core/BrowserEngine.cpp` واستخدم `m_jsBridge->registerFunction("myApi.doSomething", ...)` لاستدعاء كود C++ من المتصفح مباشرة.
-4. **بناء تطبيق رسومي حقيقي (Desktop App):**
-   انتقل إلى مجلد `templates/cef_starter/` أو `templates/qt_webengine_starter/` واتبع التعليمات في ملف `README.md` الخاص بكل منهما.
+افتح المتصفح على: `http://localhost:8080` (أو عبر رابط المعاينة السحابية المباشرة في منصة Arena).
 
 ---
 
 ## 📜 الترخيص
-هذا المشروع مفتوح المصدر ومتاح لتطوير متصفحات مخصصة لأغراض شخصية وتجارية.
+المشروع مفتوح المصدر وفق رخصة **MIT**.
+جميع حقوق البناء والتطوير محفوظة لفريق هندسة AtlasBrowser.

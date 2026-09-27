@@ -22,6 +22,9 @@ void BrowserEngine::initialize() {
     m_containerManager = std::make_shared<ContainerManager>();
     m_containerRouter = std::make_shared<AutoContainerRouter>();
     m_workspaceManager = std::make_shared<WorkspaceManager>();
+    m_aiEngine = std::make_shared<AiAssistantEngine>();
+    m_downloadManager = std::make_shared<DownloadManager>();
+    m_perfMonitor = std::make_shared<PerformanceMonitor>();
 
     setupInternalSchemes();
     setupJsBridgeApis();
@@ -67,6 +70,19 @@ void BrowserEngine::setupInternalSchemes() {
         resp.statusCode = 200;
         resp.mimeType = "text/html; charset=utf-8";
         resp.content = SchemeHandlerRegistry::renderAboutHtml(m_config);
+        return resp;
+    });
+
+    m_schemeRegistry->registerHandler("mybrowser", "performance", [this](const std::string&, const std::string&) {
+        auto allTabs = m_tabManager->getAllTabs();
+        std::vector<uint32_t> ids;
+        for (const auto& t : allTabs) ids.push_back(t.id);
+        auto metrics = m_perfMonitor->getTabMetrics(ids);
+
+        SchemeResponse resp;
+        resp.statusCode = 200;
+        resp.mimeType = "text/html; charset=utf-8";
+        resp.content = m_perfMonitor->generatePerformanceHtml(metrics);
         return resp;
     });
 }
