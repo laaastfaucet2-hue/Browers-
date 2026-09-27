@@ -185,8 +185,51 @@ static const char* HTML_UI = R"RAW_HTML(<!DOCTYPE html>
         .bookmark-item { color: var(--text-muted); text-decoration: none; display: flex; align-items: center; gap: 6px; cursor: pointer; }
         .bookmark-item:hover { color: var(--accent); }
 
-        /* Content Area */
-        .content-area { flex: 1; background: #0f172a; overflow-y: auto; position: relative; }
+        /* Main Body Layout */
+        .main-wrapper { display: flex; flex: 1; overflow: hidden; position: relative; }
+        .vertical-sidebar {
+            width: 250px;
+            background: #0b1120;
+            border-left: 1px solid var(--border-color);
+            display: none;
+            flex-direction: column;
+            padding: 10px;
+            gap: 6px;
+            overflow-y: auto;
+        }
+        body.vertical-mode .vertical-sidebar { display: flex; }
+        body.vertical-mode .window-header .tabs-container { display: none; }
+        body.vertical-mode .window-header .btn-new-tab { display: none; }
+
+        .v-tab {
+            background: #1e293b;
+            color: var(--text-muted);
+            padding: 10px 12px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            border-right: 4px solid var(--container-color, #94a3b8);
+            transition: all 0.15s ease;
+        }
+        .v-tab:hover { background: #334155; color: #fff; }
+        .v-tab.active { background: #334155; color: #fff; font-weight: bold; box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
+
+        .layout-btn {
+            background: rgba(56, 189, 248, 0.1);
+            border: 1px solid rgba(56, 189, 248, 0.3);
+            color: var(--accent);
+            padding: 4px 10px;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .layout-btn:hover { background: rgba(56, 189, 248, 0.25); }
 
         /* Notification Toast */
         .toast {
@@ -261,6 +304,7 @@ static const char* HTML_UI = R"RAW_HTML(<!DOCTYPE html>
         <button class="nav-btn" onclick="navigate('about:addons')" title="متجر وإضافات فايرفوكس (Firefox Add-ons)">🧩</button>
         <button class="nav-btn" onclick="navigate('mybrowser://settings')" title="إعدادات المتصفح">⚙️</button>
         <button class="nav-btn" onclick="navigate('mybrowser://stats')" title="إحصائيات الحظر">📊</button>
+        <button class="layout-btn" onclick="toggleVerticalTabs()" title="تبديل الألسنة الجانبية (Vertical Tabs)">📑 <span id="layoutText">ألسنة جانبية</span></button>
     </div>
 
     <!-- Bookmarks Bar -->
@@ -268,8 +312,18 @@ static const char* HTML_UI = R"RAW_HTML(<!DOCTYPE html>
         <span style="color: var(--accent); font-weight: bold;">المفضلات:</span>
     </div>
 
-    <!-- Content Area -->
-    <div class="content-area" id="contentArea"></div>
+    <!-- Main Wrapper (Sidebar + Viewport) -->
+    <div class="main-wrapper">
+        <div class="vertical-sidebar" id="verticalSidebar">
+            <div style="font-size: 0.75rem; color: #94a3b8; font-weight: bold; margin-bottom: 8px;">الألسنة الرأسية (Vertical Tabs):</div>
+            <div id="vTabsList" style="display: flex; flex-direction: column; gap: 6px; flex: 1;"></div>
+            <div style="display: flex; gap: 4px; margin-top: 10px;">
+                <button class="btn-new-tab" onclick="createNewTab(0)" style="flex: 1; border: 1px dashed #334155; font-size: 0.8rem; padding: 6px;">+ لسان عادي</button>
+                <button class="btn-new-tab" onclick="toggleContainerMenu()" style="border: 1px dashed #334155; font-size: 0.8rem; padding: 6px;">🛡️ حاوية</button>
+            </div>
+        </div>
+        <div class="content-area" id="contentArea"></div>
+    </div>
 
     <div class="toast" id="toastBox"></div>
 
@@ -305,9 +359,19 @@ static const char* HTML_UI = R"RAW_HTML(<!DOCTYPE html>
             }
         };
 
+        function toggleVerticalTabs() {
+            document.body.classList.toggle('vertical-mode');
+            const isV = document.body.classList.contains('vertical-mode');
+            document.getElementById('layoutText').innerText = isV ? 'ألسنة أفقية' : 'ألسنة جانبية';
+            renderUI();
+        }
+
         function renderUI() {
             const tabsList = document.getElementById('tabsList');
+            const vTabsList = document.getElementById('vTabsList');
             tabsList.innerHTML = '';
+            if (vTabsList) vTabsList.innerHTML = '';
+
             currentState.tabs.forEach(tab => {
                 const tabEl = document.createElement('div');
                 tabEl.className = 'tab' + (tab.id === currentState.activeTabId ? ' active' : '');
@@ -325,6 +389,20 @@ static const char* HTML_UI = R"RAW_HTML(<!DOCTYPE html>
                     <span class="tab-close" onclick="event.stopPropagation(); closeTab(${tab.id})">×</span>
                 `;
                 tabsList.appendChild(tabEl);
+
+                // Vertical Tab
+                if (vTabsList) {
+                    const vEl = document.createElement('div');
+                    vEl.className = 'v-tab' + (tab.id === currentState.activeTabId ? ' active' : '');
+                    vEl.style.setProperty('--container-color', tab.containerColor || '#94a3b8');
+                    vEl.onclick = () => switchTab(tab.id);
+                    vEl.innerHTML = `
+                        ${badgeHtml}
+                        <span style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis; flex:1;">${tab.title || 'تبويب جديد'}</span>
+                        <span class="tab-close" onclick="event.stopPropagation(); closeTab(${tab.id})">×</span>
+                    `;
+                    vTabsList.appendChild(vEl);
+                }
             });
 
             const activeTab = currentState.tabs.find(t => t.id === currentState.activeTabId);
@@ -377,6 +455,8 @@ static const char* HTML_UI = R"RAW_HTML(<!DOCTYPE html>
             const data = await res.json();
             if (data.action === 'blocked') {
                 showToast('تم حظر الموقع الإعلاني: ' + data.reason, false);
+            } else if (data.containerSwitched) {
+                showToast(`🛡️ قام محرك C++ بنقلك تلقائياً إلى حاوية: ${data.containerName}!`);
             } else if (data.cleaned) {
                 showToast('قام محرك C++ بتنظيف الرابط وترقيته لـ HTTPS بنجاح ✅');
             }
@@ -638,6 +718,9 @@ void handleClient(int clientSocket) {
            << "  \"action\": \"" << (navRes.wasBlocked ? "blocked" : "allow") << "\",\n"
            << "  \"reason\": \"" << navRes.blockedReason << "\",\n"
            << "  \"cleaned\": true,\n"
+           << "  \"containerSwitched\": " << (navRes.containerSwitched ? "true" : "false") << ",\n"
+           << "  \"containerName\": \"" << navRes.newContainerName << "\",\n"
+           << "  \"containerColor\": \"" << navRes.newContainerColor << "\",\n"
            << "  \"url\": \"" << navRes.finalUrl << "\"\n"
            << "}\n";
         responseBody = ss.str();

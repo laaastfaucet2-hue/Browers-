@@ -9,6 +9,7 @@ CORE_SRC = src/browser_core/AdBlocker.cpp \
            src/browser_core/BookmarkHistoryStore.cpp \
            src/browser_core/TabManager.cpp \
            src/browser_core/ContainerManager.cpp \
+           src/browser_core/AutoContainerRouter.cpp \
            src/browser_core/BrowserEngine.cpp
 
 CLI_SRC = src/browser_core/main.cpp

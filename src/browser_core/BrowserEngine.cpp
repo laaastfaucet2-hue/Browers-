@@ -20,6 +20,7 @@ void BrowserEngine::initialize() {
     m_storage = std::make_shared<BookmarkHistoryStore>();
     m_tabManager = std::make_shared<TabManager>();
     m_containerManager = std::make_shared<ContainerManager>();
+    m_containerRouter = std::make_shared<AutoContainerRouter>();
 
     setupInternalSchemes();
     setupJsBridgeApis();
@@ -181,6 +182,19 @@ NavigationResult BrowserEngine::navigate(uint32_t tabId, const std::string& inpu
     req.url = resolved;
     req.method = "GET";
     req.resourceType = ResourceType::MainFrame;
+
+    // Check Auto-Container Router
+    std::string targetContainerName, targetContainerColor;
+    uint32_t targetCId = m_containerRouter->matchContainer(resolved, &targetContainerName, &targetContainerColor);
+    if (targetCId > 0) {
+        auto tab = m_tabManager->getTab(tabId);
+        if (tab && tab->containerId != targetCId) {
+            m_tabManager->setTabContainer(tabId, targetCId, targetContainerName, targetContainerColor);
+            result.containerSwitched = true;
+            result.newContainerName = targetContainerName;
+            result.newContainerColor = targetContainerColor;
+        }
+    }
 
     auto interceptRes = m_networkInterceptor->interceptRequest(req);
 

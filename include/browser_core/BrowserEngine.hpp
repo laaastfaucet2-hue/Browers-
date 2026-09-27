@@ -9,6 +9,7 @@
 #include "BookmarkHistoryStore.hpp"
 #include "TabManager.hpp"
 #include "ContainerManager.hpp"
+#include "AutoContainerRouter.hpp"
 #include <memory>
 #include <string>
 
@@ -23,6 +24,9 @@ struct NavigationResult {
     std::string errorString;
     bool wasBlocked = false;
     std::string blockedReason;
+    bool containerSwitched = false;
+    std::string newContainerName;
+    std::string newContainerColor;
 };
 
 class BrowserEngine {
@@ -41,6 +45,7 @@ public:
     // Subsystems access
     std::shared_ptr<TabManager> tabs() const { return m_tabManager; }
     std::shared_ptr<ContainerManager> containers() const { return m_containerManager; }
+    std::shared_ptr<AutoContainerRouter> containerRouter() const { return m_containerRouter; }
     std::shared_ptr<AdBlocker> adBlocker() const { return m_adBlocker; }
     std::shared_ptr<NetworkInterceptor> network() const { return m_networkInterceptor; }
     std::shared_ptr<SchemeHandlerRegistry> schemes() const { return m_schemeRegistry; }
@@ -67,6 +72,7 @@ private:
     std::shared_ptr<BookmarkHistoryStore> m_storage;
     std::shared_ptr<TabManager> m_tabManager;
     std::shared_ptr<ContainerManager> m_containerManager;
+    std::shared_ptr<AutoContainerRouter> m_containerRouter;
     bool m_initialized = false;
 };
 
