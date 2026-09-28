@@ -32,6 +32,7 @@ void BrowserEngine::initialize() {
     m_scratchpadEngine = std::make_shared<ScratchpadEngine>();
     m_hardwareLimiter = std::make_shared<HardwareLimiter>();
     m_profileManager = std::make_shared<ProfileManager>(200);
+    m_ultraStorageEngine = std::make_shared<UltraStorageEngine>(200);
 
     setupInternalSchemes();
     setupJsBridgeApis();
@@ -106,6 +107,14 @@ void BrowserEngine::setupInternalSchemes() {
         resp.statusCode = 200;
         resp.mimeType = "text/html; charset=utf-8";
         resp.content = m_profileManager->renderFingerprintTestHtml();
+        return resp;
+    });
+
+    m_schemeRegistry->registerHandler("mybrowser", "storage", [this](const std::string&, const std::string&) {
+        SchemeResponse resp;
+        resp.statusCode = 200;
+        resp.mimeType = "text/html; charset=utf-8";
+        resp.content = m_ultraStorageEngine->generateStorageDiagnosticsHtml();
         return resp;
     });
 }

@@ -22,6 +22,7 @@
 #include "ScratchpadEngine.hpp"
 #include "HardwareLimiter.hpp"
 #include "ProfileManager.hpp"
+#include "UltraStorageEngine.hpp"
 #include <memory>
 #include <string>
 
@@ -69,6 +70,7 @@ public:
     std::shared_ptr<ScratchpadEngine> scratchpad() const { return m_scratchpadEngine; }
     std::shared_ptr<HardwareLimiter> hardware() const { return m_hardwareLimiter; }
     std::shared_ptr<ProfileManager> profiles() const { return m_profileManager; }
+    std::shared_ptr<UltraStorageEngine> ultraStorage() const { return m_ultraStorageEngine; }
     std::shared_ptr<AdBlocker> adBlocker() const { return m_adBlocker; }
     std::shared_ptr<NetworkInterceptor> network() const { return m_networkInterceptor; }
     std::shared_ptr<SchemeHandlerRegistry> schemes() const { return m_schemeRegistry; }
@@ -107,6 +109,7 @@ private:
     std::shared_ptr<ScratchpadEngine> m_scratchpadEngine;
     std::shared_ptr<HardwareLimiter> m_hardwareLimiter;
     std::shared_ptr<ProfileManager> m_profileManager;
+    std::shared_ptr<UltraStorageEngine> m_ultraStorageEngine;
     bool m_initialized = false;
 };
 

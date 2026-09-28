@@ -698,6 +698,7 @@ static const char* HTML_UI = R"RAW_HTML(<!DOCTYPE html>
         <div class="ext-toolbar-group" id="extToolbarGroup"></div>
 
         <button class="layout-btn" onclick="navigate('about:devices')" style="background: rgba(34, 197, 94, 0.15); border-color: rgba(34, 197, 94, 0.4); color: #4ade80;" title="إدارة 200 متصفح وجهاز افتراضي معزول">💻 200 جهاز افتراضي</button>
+        <button class="layout-btn" onclick="navigate('about:storage')" style="background: rgba(16, 185, 129, 0.15); border-color: rgba(16, 185, 129, 0.4); color: #34d399;" title="مركز إدارة التخزين فائق الخفة والعزل لـ 200 متصفح (Ultra-VFS Storage)">💾 التخزين الخارق</button>
         <button class="layout-btn" onclick="toggleMultiDeviceMatrix()" style="background: rgba(56, 189, 248, 0.15); border-color: rgba(56, 189, 248, 0.4); color: #38bdf8;" title="عرض مصفوفة المتصفحات المتزامنة (3 أجهزة مختلفة جنباً إلى جنب)">🖥️ شاشة متعددة</button>
         <button class="layout-btn" onclick="toggleDevTools()" style="background: rgba(168, 85, 247, 0.15); border-color: rgba(168, 85, 247, 0.4); color: #c084fc;" title="أدوات المطورين وفاحص الشبكة (F12 DevTools)">🛠️ DevTools</button>
         <button class="nav-btn" onclick="navigate('about:passwords')" title="الخزنة المشفرة لكلمات المرور">🔐</button>
@@ -1711,6 +1712,7 @@ static const char* HTML_UI = R"RAW_HTML(<!DOCTYPE html>
 
         // Command Palette
         const COMMANDS = [
+            { id: 'storage', title: 'إدارة التخزين فائق الخفة والعزل لـ 200 متصفح (about:storage)', icon: '💾', action: () => navigate('about:storage') },
             { id: 'devices', title: 'إدارة 200 متصفح وجهاز افتراضي (about:devices)', icon: '💻', action: () => navigate('about:devices') },
             { id: 'matrix', title: 'شاشة المتصفحات المتزامنة (Multi-Device Matrix)', icon: '🖥️', action: () => toggleMultiDeviceMatrix() },
             { id: 'fingerprint', title: 'فحص بصمة الجهاز والعتاد (about:fingerprint)', icon: '🛡️', action: () => navigate('about:fingerprint') },
@@ -1909,6 +1911,7 @@ static std::string buildStateJson() {
        << "  \"tabGroups\": " << g_engine.tabGroups()->exportGroupsJson() << ",\n"
        << "  \"notes\": " << g_engine.scratchpad()->exportNotesJson() << ",\n"
        << "  \"hardware\": " << g_engine.hardware()->exportHardwareJson() << ",\n"
+       << "  \"storageMetrics\": " << g_engine.ultraStorage()->exportGlobalMetricsJson() << ",\n"
        << "  \"tabs\": [\n";
 
     for (size_t i = 0; i < tabs.size(); ++i) {
@@ -1920,6 +1923,8 @@ static std::string buildStateJson() {
             contentPreview = "<!-- Password Vault -->";
         } else if (tabs[i].currentUrl == "about:devices" || tabs[i].currentUrl == "about:fingerprint") {
             contentPreview = "<!-- Devices Hub -->";
+        } else if (tabs[i].currentUrl == "about:storage" || tabs[i].currentUrl.rfind("mybrowser://storage", 0) == 0) {
+            contentPreview = g_engine.ultraStorage()->generateStorageDiagnosticsHtml();
         } else if (tabs[i].currentUrl.rfind("about:downloads", 0) == 0 || tabs[i].currentUrl.rfind("mybrowser://downloads", 0) == 0) {
             auto dls = g_engine.downloads()->getAllDownloads();
             std::ostringstream dlStream;
@@ -2074,6 +2079,21 @@ void handleClient(int clientSocket) {
     } else if (method == "GET" && path == "/api/state") {
         contentType = "application/json";
         responseBody = buildStateJson();
+    } else if (method == "POST" && path == "/api/storage/compact") {
+        g_engine.ultraStorage()->compactAll();
+        contentType = "application/json";
+        responseBody = "{\"status\": \"ok\"}";
+    } else if (method == "POST" && path == "/api/storage/hibernate_inactive") {
+        auto cur = g_engine.profiles()->getActiveProfile();
+        uint32_t activeId = cur ? cur->id : 1;
+        size_t count = g_engine.ultraStorage()->hibernateAllInactive(activeId);
+        contentType = "application/json";
+        responseBody = "{\"status\": \"ok\", \"hibernated\": " + std::to_string(count) + "}";
+    } else if (method == "POST" && path == "/api/storage/wake") {
+        std::string idStr = extractJsonField(body, "id");
+        if (!idStr.empty()) g_engine.ultraStorage()->wakeProfile(std::stoi(idStr));
+        contentType = "application/json";
+        responseBody = "{\"status\": \"ok\"}";
     } else if (method == "POST" && path == "/api/profiles/switch") {
         std::string idStr = extractJsonField(body, "id");
         if (!idStr.empty()) {
@@ -2160,12 +2180,13 @@ void handleClient(int clientSocket) {
             url = "https://addons.mozilla.org/firefox/";
         }
         auto navRes = g_engine.navigateActiveTab(url);
-        if (url == "https://addons.mozilla.org/firefox/" || url == "about:downloads" || url == "about:performance" || url == "about:reader" || url == "about:passwords" || url == "about:devices" || url == "about:fingerprint") {
+        if (url == "https://addons.mozilla.org/firefox/" || url == "about:downloads" || url == "about:performance" || url == "about:reader" || url == "about:passwords" || url == "about:devices" || url == "about:fingerprint" || url == "about:storage") {
             auto cur = g_engine.tabs()->getActiveTab();
             if (cur) {
                 if (url == "https://addons.mozilla.org/firefox/") cur->title = "إضافات فايرفوكس (AMO)";
                 else if (url == "about:devices") cur->title = "إدارة 200 جهاز افتراضي";
                 else if (url == "about:fingerprint") cur->title = "فاحص بصمة العتاد";
+                else if (url == "about:storage") cur->title = "التخزين الخارق وعزل الـ 200 متصفح";
                 else if (url == "about:passwords") cur->title = "خزنة كلمات المرور";
                 else if (url == "about:downloads") cur->title = "مدير التنزيلات";
                 else if (url == "about:performance") cur->title = "مراقبة الأداء";

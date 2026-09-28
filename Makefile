@@ -23,6 +23,7 @@ CORE_SRC = src/browser_core/AdBlocker.cpp \
            src/browser_core/HardwareLimiter.cpp \
            src/browser_core/VirtualDeviceProfile.cpp \
            src/browser_core/ProfileManager.cpp \
+           src/browser_core/UltraStorageEngine.cpp \
            src/browser_core/BrowserEngine.cpp
 
 CLI_SRC = src/browser_core/main.cpp

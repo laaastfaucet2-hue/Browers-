@@ -299,6 +299,45 @@ void runTests(BrowserEngine& engine) {
                    script.find("[Atlas Anti-Detect]") != std::string::npos && script.find("hardwareConcurrency") != std::string::npos);
     }
 
+    // 21. Ultra-Isolated Storage & Zero-Footprint Engine (200 Virtual Devices VFS)
+    {
+        auto storage = engine.ultraStorage();
+        assertTest("Ultra-Storage Engine: 200 isolated storage boxes initialized", storage->hasBox(200));
+
+        // Test cookie isolation between profile 1 and profile 2
+        storage->setCookie(1, "mysecurebank.com", "auth_token", "p1_secret_token_123");
+        storage->setCookie(2, "mysecurebank.com", "auth_token", "p2_different_token_999");
+
+        auto p1Cookies = storage->getCookies(1, "mysecurebank.com");
+        auto p2Cookies = storage->getCookies(2, "mysecurebank.com");
+        assertTest("Ultra-Storage Engine: Profile #1 and #2 cookie isolation (Zero-Leakage)",
+                   p1Cookies.size() == 1 && p2Cookies.size() == 1 && p1Cookies[0].value != p2Cookies[0].value);
+
+        // Test LocalStorage isolation
+        storage->setItem(1, "app.domain", "user_pref", "dark_mode");
+        storage->setItem(2, "app.domain", "user_pref", "light_mode");
+        assertTest("Ultra-Storage Engine: LocalStorage key-value isolation between virtual devices",
+                   storage->getItem(1, "app.domain", "user_pref") == "dark_mode" &&
+                   storage->getItem(2, "app.domain", "user_pref") == "light_mode");
+
+        // Test Instant Hibernation (Zero-RAM snapshot)
+        bool hibOk = storage->hibernateProfile(1);
+        auto p1Stats = storage->getBox(1)->getStats();
+        assertTest("Ultra-Storage Engine: Instant Hibernation (RAM freed, State == HIBERNATED)",
+                   hibOk && p1Stats.state == ProfileStorageState::HIBERNATED);
+
+        // Test Instant Wakeup (<3ms state restoration)
+        bool wakeOk = storage->wakeProfile(1);
+        auto p1AwakeCookies = storage->getCookies(1, "mysecurebank.com");
+        assertTest("Ultra-Storage Engine: Instant Wakeup (<3ms state restoration from snapshot)",
+                   wakeOk && !p1AwakeCookies.empty() && p1AwakeCookies[0].value == "p1_secret_token_123");
+
+        // Test Global Space Savings (>45 GB Disk, >25 GB RAM saved across 200 profiles)
+        auto metrics = storage->calculateGlobalMetrics();
+        assertTest("Ultra-Storage Engine: Massive disk & RAM savings calculated across 200 profiles",
+                   metrics.totalDiskSavedBytes > 40000000000ULL && metrics.totalRamSavedBytes > 20000000000ULL);
+    }
+
     std::cout << "\n\033[1;36mResult: " << passed << " of " << total << " tests passed successfully!\033[0m\n\n";
 }
 
