@@ -25,6 +25,7 @@ void BrowserEngine::initialize() {
     m_aiEngine = std::make_shared<AiAssistantEngine>();
     m_downloadManager = std::make_shared<DownloadManager>();
     m_perfMonitor = std::make_shared<PerformanceMonitor>();
+    m_extensionRuntime = std::make_shared<ExtensionRuntime>();
 
     setupInternalSchemes();
     setupJsBridgeApis();

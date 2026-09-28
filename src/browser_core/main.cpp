@@ -194,6 +194,23 @@ void runTests(BrowserEngine& engine) {
                    readerHtml.find("وضع القراءة") != std::string::npos && readerHtml.find("Hello World") != std::string::npos);
     }
 
+    // 14. Firefox WebExtension Runtime (AMO & XPI Engine)
+    {
+        auto catalog = engine.extensions()->getCatalog();
+        assertTest("WebExtension Runtime: Official AMO catalog initialized (Dark Reader, uBlock, Translate)", catalog.size() >= 4);
+
+        bool installed = engine.extensions()->installExtension("darkreader@firefox");
+        assertTest("WebExtension Runtime: Real extension installation (Dark Reader)", installed);
+
+        std::string injectedCss = engine.extensions()->getInjectedCssForUrl("https://github.com");
+        assertTest("WebExtension Runtime: Content CSS injection engine active for URLs", 
+                   !injectedCss.empty() && injectedCss.find("Dark Reader WebExtension Engine") != std::string::npos);
+
+        std::string injectedJs = engine.extensions()->getInjectedJsForUrl("https://github.com");
+        assertTest("WebExtension Runtime: Content JS injection engine active for URLs", 
+                   !injectedJs.empty() && injectedJs.find("__darkReaderInjected") != std::string::npos);
+    }
+
     std::cout << "\n\033[1;36mResult: " << passed << " of " << total << " tests passed successfully!\033[0m\n\n";
 }
 

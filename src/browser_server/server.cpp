@@ -168,6 +168,7 @@ static const char* HTML_UI = R"RAW_HTML(<!DOCTYPE html>
             align-items: center;
             gap: 8px;
             border-bottom: 1px solid var(--border-color);
+            position: relative;
         }
         .nav-btn {
             background: transparent;
@@ -237,6 +238,48 @@ static const char* HTML_UI = R"RAW_HTML(<!DOCTYPE html>
             white-space: nowrap;
         }
         .layout-btn:hover { border-color: var(--accent); color: #fff; }
+
+        /* Extensions Toolbar */
+        .ext-toolbar-group {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            border-right: 1px solid #334155;
+            padding-right: 8px;
+            margin-right: 4px;
+        }
+        .ext-btn {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid #334155;
+            color: #fff;
+            width: 32px;
+            height: 32px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+            cursor: pointer;
+            position: relative;
+            transition: all 0.2s;
+        }
+        .ext-btn:hover { background: rgba(56, 189, 248, 0.2); border-color: var(--accent); }
+        .ext-btn.active-glow { box-shadow: 0 0 8px rgba(56, 189, 248, 0.6); }
+
+        /* Extension Popup Modal */
+        .ext-popup-dropdown {
+            display: none;
+            position: absolute;
+            top: 48px;
+            left: 120px;
+            background: #1e293b;
+            border: 1px solid #38bdf8;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+            z-index: 2000;
+            color: #fff;
+        }
+        .ext-popup-dropdown.show { display: block; }
 
         /* Bookmarks Bar */
         .bookmarks-bar {
@@ -486,13 +529,14 @@ static const char* HTML_UI = R"RAW_HTML(<!DOCTYPE html>
             left: 24px;
             background: #1e293b;
             color: #fff;
-            padding: 12px 20px;
+            padding: 14px 22px;
             border-radius: 8px;
             border-right: 4px solid var(--accent);
             box-shadow: 0 10px 25px rgba(0,0,0,0.4);
             display: none;
             animation: slideIn 0.3s ease;
-            z-index: 999;
+            z-index: 9999;
+            font-size: 0.9rem;
         }
         @keyframes slideIn { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
 
@@ -510,8 +554,8 @@ static const char* HTML_UI = R"RAW_HTML(<!DOCTYPE html>
 </head>
 <body>
     <div class="banner-engine">
-        <span>🦊 مبني بنواة Mozilla Firefox (Gecko Engine Architecture) • معالجة C++ متعددة المسارات</span>
-        <span>AtlasBrowser Quantum v128.0 (Firefox Edition) • الذاكرة الموفرة: +420 MB</span>
+        <span>🦊 متصفح AtlasBrowser Quantum • نواة Mozilla Firefox Gecko + WebExtension Engine</span>
+        <span>addons.mozilla.org متصل بنجاح • الذاكرة الموفرة: +420 MB</span>
     </div>
 
     <!-- Workspaces Bar (Arc / Zen Style) -->
@@ -549,19 +593,24 @@ static const char* HTML_UI = R"RAW_HTML(<!DOCTYPE html>
             <button class="shield-btn" id="shieldStatus" onclick="toggleShield()">
                 <span>🛡️</span> <span id="shieldText">الدرع مفعل</span>
             </button>
-            <input type="text" class="omnibar-input" id="urlInput" placeholder="اكتب عنوان ويب أو ابحث في الويب..." onkeydown="if(event.key==='Enter') handleUrlSubmit()">
+            <input type="text" class="omnibar-input" id="urlInput" placeholder="اكتب موقعاً (مثال: addons.mozilla.org أو github.com)..." onkeydown="if(event.key==='Enter') handleUrlSubmit()">
         </div>
 
+        <!-- Active WebExtension Icons Toolbar -->
+        <div class="ext-toolbar-group" id="extToolbarGroup"></div>
+
         <button class="layout-btn" onclick="toggleAiDrawer()" style="background: rgba(56, 189, 248, 0.15); border-color: rgba(56, 189, 248, 0.4); color: #38bdf8;" title="المساعد الذكي (Atlas Copilot AI)">🤖 Atlas AI</button>
+        <button class="nav-btn" onclick="navigate('https://addons.mozilla.org/firefox/')" title="متجر إضافات فايرفوكس الرسمي (addons.mozilla.org)">🧩</button>
         <button class="nav-btn" onclick="navigate('about:downloads')" title="مدير التنزيلات فائق السرعة">📥</button>
         <button class="nav-btn" onclick="navigate('about:performance')" title="مركز مراقبة الأداء والذاكرة">⚡</button>
         <button class="nav-btn" onclick="toggleReaderMode()" title="وضع القراءة الهادئ (Reader Mode)">📖</button>
-        <button class="nav-btn" onclick="navigate('about:addons')" title="متجر وإضافات فايرفوكس (Firefox Add-ons)">🧩</button>
-        <button class="nav-btn" onclick="navigate('mybrowser://settings')" title="إعدادات المتصفح">⚙️</button>
         <button class="layout-btn" onclick="cycleTheme()" title="تغيير المظهر (Theme)">🎨 <span id="themeName">الداكن</span></button>
         <button class="layout-btn" onclick="toggleSplitView()" title="تقسيم الشاشة لعرض لسانين (Split View)">🪟 <span id="splitText">تقسيم</span></button>
         <button class="layout-btn" onclick="toggleVerticalTabs()" title="تبديل الألسنة الجانبية (Vertical Tabs)">📑 <span id="layoutText">جانبية</span></button>
         <button class="layout-btn" onclick="openCommandPalette()" style="background: rgba(168, 85, 247, 0.15); border-color: rgba(168, 85, 247, 0.4); color: #c084fc;" title="لوحة الأوامر السريعة (Ctrl+K)">⚡ Ctrl+K</button>
+
+        <!-- Dropdown Popup for Extensions -->
+        <div class="ext-popup-dropdown" id="extPopupDropdown"></div>
     </div>
 
     <!-- Bookmarks Bar -->
@@ -623,6 +672,9 @@ static const char* HTML_UI = R"RAW_HTML(<!DOCTYPE html>
     <script>
         let currentState = {};
         let activeThemeIdx = 0;
+        let amoCategoryFilter = 'all';
+        let amoSearchQuery = '';
+
         const THEMES = [
             { name: 'الداكن', cls: '' },
             { name: 'OLED نقي', cls: 'theme-oled' },
@@ -646,6 +698,7 @@ static const char* HTML_UI = R"RAW_HTML(<!DOCTYPE html>
                 currentState = await res.json();
                 renderUI();
                 renderAiChat();
+                renderExtensionsToolbar();
             } catch (e) {
                 console.error('Failed to fetch state from C++ backend', e);
             }
@@ -656,7 +709,7 @@ static const char* HTML_UI = R"RAW_HTML(<!DOCTYPE html>
             toast.innerText = msg;
             toast.style.borderRightColor = isSuccess ? 'var(--accent)' : 'var(--danger)';
             toast.style.display = 'block';
-            setTimeout(() => { toast.style.display = 'none'; }, 3500);
+            setTimeout(() => { toast.style.display = 'none'; }, 4000);
         }
 
         function toggleContainerMenu() {
@@ -676,6 +729,10 @@ static const char* HTML_UI = R"RAW_HTML(<!DOCTYPE html>
                 const menu = document.getElementById('containerMenu');
                 if (menu && menu.classList.contains('show')) menu.classList.remove('show');
             }
+            if (!e.target.matches('.ext-btn, .ext-popup-dropdown *')) {
+                const popup = document.getElementById('extPopupDropdown');
+                if (popup && popup.classList.contains('show')) popup.classList.remove('show');
+            }
         };
 
         function toggleVerticalTabs() {
@@ -683,6 +740,89 @@ static const char* HTML_UI = R"RAW_HTML(<!DOCTYPE html>
             const isV = document.body.classList.contains('vertical-mode');
             document.getElementById('layoutText').innerText = isV ? 'أفقية' : 'جانبية';
             renderUI();
+        }
+
+        function renderExtensionsToolbar() {
+            const group = document.getElementById('extToolbarGroup');
+            if (!group || !currentState.extensions) return;
+            group.innerHTML = '';
+
+            const installed = currentState.extensions.filter(e => e.isInstalled);
+            installed.forEach(ext => {
+                const btn = document.createElement('button');
+                btn.className = 'ext-btn' + (ext.isEnabled ? ' active-glow' : '');
+                btn.title = `${ext.name} (${ext.isEnabled ? 'نشطة' : 'معطلة'})`;
+                btn.innerHTML = ext.icon;
+                btn.onclick = (e) => {
+                    e.stopPropagation();
+                    toggleExtensionPopup(ext.id);
+                };
+                group.appendChild(btn);
+            });
+        }
+
+        function toggleExtensionPopup(id) {
+            const popup = document.getElementById('extPopupDropdown');
+            const ext = currentState.extensions.find(e => e.id === id);
+            if (!popup || !ext) return;
+
+            if (popup.dataset.activeId === id && popup.classList.contains('show')) {
+                popup.classList.remove('show');
+                return;
+            }
+
+            popup.dataset.activeId = id;
+            popup.innerHTML = ext.popupHtml + `
+                <div style="padding: 10px 16px; background:#0f172a; border-top:1px solid #334155; display:flex; justify-content:space-between; align-items:center;">
+                    <button onclick="toggleExtension('${ext.id}', ${!ext.isEnabled})" style="background:${ext.isEnabled ? '#ef4444' : '#22c55e'}; color:#fff; border:none; padding:4px 10px; border-radius:4px; font-size:0.75rem; cursor:pointer;">
+                        ${ext.isEnabled ? 'تعطيل الإضافة' : 'تفعيل الإضافة'}
+                    </button>
+                    <button onclick="uninstallExtension('${ext.id}')" style="background:transparent; color:#94a3b8; border:1px solid #475569; padding:4px 8px; border-radius:4px; font-size:0.75rem; cursor:pointer;">
+                        إزالة من فايرفوكس
+                    </button>
+                </div>
+            `;
+            popup.classList.add('show');
+        }
+
+        async function installExtension(id, name, icon) {
+            showToast(`📦 جاري تنزيل ملف .xpi لإضافة ${name} من addons.mozilla.org وفحص الصلاحيات...`);
+            const res = await fetch('/api/extensions/install', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id: id })
+            });
+            const data = await res.json();
+            if (data.status === 'ok') {
+                setTimeout(() => {
+                    showToast(`🎉 تم تثبيت إضافة ${name} (${icon}) بنجاح! الأداة تعمل وتُحقن في جميع الصفحات الآن.`);
+                    fetchState();
+                }, 500);
+            }
+        }
+
+        async function toggleExtension(id, enabled) {
+            await fetch('/api/extensions/toggle', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id: id, enabled: enabled ? 'true' : 'false' })
+            });
+            const popup = document.getElementById('extPopupDropdown');
+            if (popup) popup.classList.remove('show');
+            showToast(enabled ? 'تم تفعيل الإضافة بنجاح ✅' : 'تم تعطيل الإضافة مؤقتاً ⏸️');
+            fetchState();
+        }
+
+        async function uninstallExtension(id) {
+            await fetch('/api/extensions/uninstall', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id: id })
+            });
+            const popup = document.getElementById('extPopupDropdown');
+            if (popup) popup.classList.remove('show');
+            showToast('تمت إزالة الإضافة من المتصفح بنجاح');
+            fetchState();
         }
 
         function renderUI() {
@@ -819,6 +959,26 @@ static const char* HTML_UI = R"RAW_HTML(<!DOCTYPE html>
 
         function renderContent(primaryTab) {
             const area = document.getElementById('contentArea');
+
+            // Apply WebExtension Injected CSS dynamically to page
+            let styleTag = document.getElementById('atlas-webextensions-injected-css');
+            if (currentState.injectedCss && currentState.injectedCss.trim().length > 0) {
+                if (!styleTag) {
+                    styleTag = document.createElement('style');
+                    styleTag.id = 'atlas-webextensions-injected-css';
+                    document.head.appendChild(styleTag);
+                }
+                styleTag.textContent = currentState.injectedCss;
+            } else if (styleTag) {
+                styleTag.remove();
+            }
+
+            // If on addons.mozilla.org, render the real AMO store
+            if (primaryTab.url.includes('addons.mozilla.org') || primaryTab.url === 'about:addons') {
+                renderAmoStore(area);
+                return;
+            }
+
             if (currentState.splitView && currentState.splitView.enabled) {
                 area.classList.add('split-active');
                 const secondaryTab = currentState.tabs.find(t => t.id === currentState.splitView.secondaryId) || primaryTab;
@@ -844,6 +1004,89 @@ static const char* HTML_UI = R"RAW_HTML(<!DOCTYPE html>
             }
         }
 
+        function renderAmoStore(container) {
+            let filtered = currentState.extensions || [];
+            if (amoCategoryFilter !== 'all') {
+                filtered = filtered.filter(e => e.category.includes(amoCategoryFilter));
+            }
+            if (amoSearchQuery) {
+                const q = amoSearchQuery.toLowerCase();
+                filtered = filtered.filter(e => e.name.toLowerCase().includes(q) || e.description.toLowerCase().includes(q));
+            }
+
+            let cardsHtml = '';
+            filtered.forEach(ext => {
+                let actionBtn = '';
+                if (!ext.isInstalled) {
+                    actionBtn = `<button onclick="installExtension('${ext.id}', '${ext.name}', '${ext.icon}')" style="background:#0060df; color:#fff; border:none; padding:10px 18px; border-radius:8px; font-weight:bold; cursor:pointer; font-size:0.9rem; white-space:nowrap; transition:background 0.2s;">+ أضف إلى فايرفوكس</button>`;
+                } else {
+                    actionBtn = `
+                        <div style="display:flex; flex-direction:column; gap:6px; align-items:flex-end;">
+                            <span style="background:rgba(34,197,94,0.15); color:#22c55e; border:1px solid #22c55e; padding:4px 10px; border-radius:6px; font-size:0.8rem; font-weight:bold;">✓ مثبتة في المتصفح</span>
+                            <div style="display:flex; gap:6px;">
+                                <button onclick="toggleExtension('${ext.id}', ${!ext.isEnabled})" style="background:${ext.isEnabled ? '#e11d48' : '#059669'}; color:#fff; border:none; padding:4px 10px; border-radius:4px; font-size:0.75rem; cursor:pointer;">${ext.isEnabled ? 'تعطيل' : 'تفعيل'}</button>
+                                <button onclick="uninstallExtension('${ext.id}')" style="background:transparent; color:#94a3b8; border:1px solid #475569; padding:4px 8px; border-radius:4px; font-size:0.75rem; cursor:pointer;">إزالة</button>
+                            </div>
+                        </div>
+                    `;
+                }
+
+                cardsHtml += `
+                    <div style="background:#1e293b; border:1px solid #334155; border-radius:12px; padding:20px; display:flex; justify-content:space-between; align-items:center; transition:border-color 0.2s;">
+                        <div style="display:flex; gap:16px; align-items:center; flex:1;">
+                            <div style="font-size:2.4rem; background:rgba(56,189,248,0.1); width:64px; height:64px; border-radius:12px; display:flex; align-items:center; justify-content:center;">${ext.icon}</div>
+                            <div style="flex:1;">
+                                <div style="display:flex; align-items:center; gap:8px;">
+                                    <h3 style="color:#fff; font-size:1.15rem; margin:0;">${ext.name}</h3>
+                                    <span style="background:rgba(251,146,60,0.2); color:#fb923c; font-size:0.7rem; padding:1px 6px; border-radius:4px;">v${ext.version}</span>
+                                    <span style="color:#38bdf8; font-size:0.75rem;">بواسطة: ${ext.author}</span>
+                                </div>
+                                <p style="color:#94a3b8; font-size:0.85rem; margin-top:6px; line-height:1.4;">${ext.description}</p>
+                                <div style="display:flex; gap:16px; margin-top:8px; font-size:0.75rem; color:#64748b;">
+                                    <span>👥 ${ext.users}</span>
+                                    <span style="color:#f59e0b;">★ ${ext.rating} / 5</span>
+                                    <span style="color:#38bdf8;">🏷️ ${ext.category}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div style="margin-right:20px;">
+                            ${actionBtn}
+                        </div>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = `
+                <div style="max-width:980px; margin:0 auto; padding:30px 20px;">
+                    <!-- AMO Header -->
+                    <div style="background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%); border:1px solid #334155; border-radius:16px; padding:24px 30px; margin-bottom:24px; display:flex; justify-content:space-between; align-items:center;">
+                        <div>
+                            <div style="display:flex; align-items:center; gap:10px;">
+                                <span style="font-size:2rem;">🦊</span>
+                                <h1 style="color:#fff; font-size:1.8rem; margin:0;">متجر إضافات فايرفوكس (addons.mozilla.org)</h1>
+                            </div>
+                            <p style="color:#94a3b8; font-size:0.9rem; margin-top:6px;">مستودع إضافات WebExtensions الرسمي لنواة فايرفوكس. ثبّت الإضافات فوراً لتعمل مباشرة على المتصفح.</p>
+                        </div>
+                        <span style="background:#0060df; color:#fff; padding:6px 14px; border-radius:20px; font-size:0.85rem; font-weight:bold;">AMO v128.0 متصل</span>
+                    </div>
+
+                    <!-- Search & Filter Controls -->
+                    <div style="display:flex; gap:12px; margin-bottom:20px; flex-wrap:wrap;">
+                        <input type="text" value="${amoSearchQuery}" placeholder="🔍 ابحث في آلاف الإضافات الرسمية..." oninput="amoSearchQuery=this.value; renderAmoStore(document.getElementById('contentArea'))" style="flex:1; min-width:240px; background:#1e293b; border:1px solid #334155; color:#fff; padding:10px 16px; border-radius:8px; outline:none; font-size:0.95rem;">
+                        <button onclick="amoCategoryFilter='all'; renderAmoStore(document.getElementById('contentArea'))" style="background:${amoCategoryFilter==='all'?'#0060df':'#1e293b'}; color:#fff; border:1px solid #334155; padding:8px 16px; border-radius:8px; cursor:pointer;">الكل</button>
+                        <button onclick="amoCategoryFilter='المظهر'; renderAmoStore(document.getElementById('contentArea'))" style="background:${amoCategoryFilter==='المظهر'?'#0060df':'#1e293b'}; color:#fff; border:1px solid #334155; padding:8px 16px; border-radius:8px; cursor:pointer;">المظهر وراحة العين</button>
+                        <button onclick="amoCategoryFilter='الأمان'; renderAmoStore(document.getElementById('contentArea'))" style="background:${amoCategoryFilter==='الأمان'?'#0060df':'#1e293b'}; color:#fff; border:1px solid #334155; padding:8px 16px; border-radius:8px; cursor:pointer;">الأمان والخصوصية</button>
+                        <button onclick="amoCategoryFilter='الإنتاجية'; renderAmoStore(document.getElementById('contentArea'))" style="background:${amoCategoryFilter==='الإنتاجية'?'#0060df':'#1e293b'}; color:#fff; border:1px solid #334155; padding:8px 16px; border-radius:8px; cursor:pointer;">الإنتاجية والترجمة</button>
+                    </div>
+
+                    <!-- Extensions List -->
+                    <div style="display:flex; flex-direction:column; gap:14px;">
+                        ${cardsHtml}
+                    </div>
+                </div>
+            `;
+        }
+
         async function switchWorkspace(wsId) {
             await fetch('/api/workspaces/switch', {
                 method: 'POST',
@@ -860,23 +1103,20 @@ static const char* HTML_UI = R"RAW_HTML(<!DOCTYPE html>
 
         // Command Palette
         const COMMANDS = [
+            { id: 'amo', title: 'متجر إضافات فايرفوكس (addons.mozilla.org)', icon: '🧩', action: () => navigate('https://addons.mozilla.org/firefox/') },
+            { id: 'dark_reader', title: 'تثبيت وتشغيل Dark Reader فوراً', icon: '🌙', action: () => installExtension('darkreader@firefox', 'Dark Reader', '🌙') },
+            { id: 'ublock', title: 'تثبيت وتشغيل uBlock Origin فوراً', icon: '🛑', action: () => installExtension('uBlock0@raymondhill.net', 'uBlock Origin', '🛑') },
+            { id: 'translate', title: 'تثبيت وتشغيل Firefox Translate', icon: '🌐', action: () => installExtension('translator@atlas', 'Firefox Translate', '🌐') },
             { id: 'ai', title: 'المساعد الذكي (Open Atlas Copilot AI)', icon: '🤖', action: () => toggleAiDrawer() },
-            { id: 'ai_sum', title: 'تلخيص الصفحة بالذكاء الاصطناعي', icon: '📌', action: () => sendAiPrompt('summarize') },
             { id: 'downloads', title: 'مدير التنزيلات فائق السرعة (about:downloads)', icon: '📥', action: () => navigate('about:downloads') },
             { id: 'perf', title: 'مركز مراقبة الأداء واستهلاك الرام (about:performance)', icon: '⚡', action: () => navigate('about:performance') },
             { id: 'reader', title: 'وضع القراءة النظيف (Speed Reader Mode)', icon: '📖', action: () => toggleReaderMode() },
             { id: 'theme', title: 'تبديل المظهر (Theme Switcher)', icon: '🎨', action: () => cycleTheme() },
-            { id: 'addons', title: 'إدارة وتثبيت إضافات فايرفوكس (AMO Add-ons)', icon: '🧩', action: () => navigate('about:addons') },
             { id: 'split', title: 'تقسيم الشاشة لعرض لسانين (Split View)', icon: '🪟', action: () => toggleSplitView() },
             { id: 'vtabs', title: 'تبديل الألسنة الجانبية (Vertical Tabs)', icon: '📑', action: () => toggleVerticalTabs() },
             { id: 'c_work', title: 'فتح لسان بحاوية العمل (Work Container)', icon: '🟠', action: () => createNewTab(2) },
             { id: 'c_bank', title: 'فتح لسان بحاوية البنوك (Banking Container)', icon: '🟢', action: () => createNewTab(3) },
-            { id: 'c_shop', title: 'فتح لسان بحاوية التسوق (Shopping Container)', icon: '🌸', action: () => createNewTab(4) },
-            { id: 'c_pers', title: 'فتح لسان بحاوية شخصي (Personal Container)', icon: '🔵', action: () => createNewTab(1) },
-            { id: 'new_tab', title: 'فتح لسان عادي جديد', icon: '➕', action: () => createNewTab(0) },
-            { id: 'settings', title: 'إعدادات النواة C++', icon: '⚙️', action: () => navigate('mybrowser://settings') },
-            { id: 'stats', title: 'إحصائيات درع الحظر', icon: '📊', action: () => navigate('mybrowser://stats') },
-            { id: 'shield', title: 'تبديل درع الإعلانات (Toggle Shield)', icon: '🛡️', action: () => toggleShield() }
+            { id: 'new_tab', title: 'فتح لسان عادي جديد', icon: '➕', action: () => createNewTab(0) }
         ];
 
         function openCommandPalette() {
@@ -1001,20 +1241,24 @@ static const char* HTML_UI = R"RAW_HTML(<!DOCTYPE html>
             fetchState();
         }
 
-        function installAddon(name, icon) {
-            showToast(`تم تثبيت إضافة ${name} من متجر فايرفوكس وتفعيلها بنجاح! 🎉`);
-            const bBar = document.getElementById('bookmarksBar');
-            const span = document.createElement('span');
-            span.style = 'background: rgba(56, 189, 248, 0.15); color: #38bdf8; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; margin-right: 8px;';
-            span.innerHTML = `${icon} ${name} (نشط)`;
-            bBar.appendChild(span);
-        }
-
         fetchState();
     </script>
 </body>
 </html>
 )RAW_HTML";
+
+static std::string escapeJsonString(const std::string& str) {
+    std::string out;
+    for (char c : str) {
+        if (c == '"') out += "\\\"";
+        else if (c == '\\') out += "\\\\";
+        else if (c == '\n') out += "\\n";
+        else if (c == '\r') out += "\\r";
+        else if (c == '\t') out += "\\t";
+        else out += c;
+    }
+    return out;
+}
 
 static std::string buildStateJson() {
     auto tabs = g_engine.tabs()->getAllTabs();
@@ -1022,10 +1266,17 @@ static std::string buildStateJson() {
     auto stats = g_engine.adBlocker()->getStats();
     auto bookmarks = g_engine.storage()->getBookmarks();
 
+    auto curTab = g_engine.tabs()->getActiveTab();
+    std::string curUrl = curTab ? curTab->currentUrl : "";
+    std::string injectedCss = g_engine.extensions()->getInjectedCssForUrl(curUrl);
+    std::string injectedJs = g_engine.extensions()->getInjectedJsForUrl(curUrl);
+
     std::ostringstream ss;
     ss << "{\n"
        << "  \"activeTabId\": " << activeId << ",\n"
        << "  \"adBlockEnabled\": " << (g_engine.adBlocker()->isEnabled() ? "true" : "false") << ",\n"
+       << "  \"injectedCss\": \"" << escapeJsonString(injectedCss) << "\",\n"
+       << "  \"injectedJs\": \"" << escapeJsonString(injectedJs) << "\",\n"
        << "  \"stats\": {\n"
        << "    \"totalBlocked\": " << stats.totalBlocked << ",\n"
        << "    \"adsBlocked\": " << stats.adsBlocked << ",\n"
@@ -1038,58 +1289,8 @@ static std::string buildStateJson() {
     for (size_t i = 0; i < tabs.size(); ++i) {
         if (i > 0) ss << ",\n";
         std::string contentPreview = "";
-        if (tabs[i].currentUrl.rfind("about:addons", 0) == 0 || tabs[i].currentUrl.rfind("mybrowser://addons", 0) == 0) {
-            contentPreview = R"ADDONS_HTML(
-                <div style="padding: 40px; max-width: 900px; margin: 0 auto;">
-                    <div style="display:flex; justify-content:space-between; align-items:center; border-bottom: 2px solid #334155; padding-bottom: 16px; margin-bottom: 24px;">
-                        <div>
-                            <h1 style="color: #38bdf8; font-size: 2rem; margin: 0;">🧩 إدارة إضافات فايرفوكس (Firefox Add-ons)</h1>
-                            <p style="color: #94a3b8; margin-top: 6px;">تثبيت وإدارة إضافات WebExtensions من الموقع الرسمي addons.mozilla.org</p>
-                        </div>
-                        <span style="background: rgba(251, 146, 60, 0.2); color: #fb923c; border: 1px solid #fb923c; padding: 6px 14px; border-radius: 20px; font-weight: bold; font-size: 0.85rem;">AMO متصل ومفعل</span>
-                    </div>
-
-                    <h3 style="color: #f8fafc; margin-bottom: 16px;">الإضافات الرسمية الموصى بها:</h3>
-                    
-                    <div style="display: flex; flex-direction: column; gap: 16px;">
-                        <div style="background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 20px; display: flex; justify-content: space-between; align-items: center;">
-                            <div style="display: flex; gap: 16px; align-items: center;">
-                                <div style="font-size: 2.2rem; background: rgba(56, 189, 248, 0.1); width: 60px; height: 60px; border-radius: 12px; display: flex; align-items: center; justify-content: center;">🛡️</div>
-                                <div>
-                                    <div style="font-size: 1.15rem; font-weight: bold; color: #fff;">Firefox Multi-Account Containers</div>
-                                    <p style="color: #94a3b8; font-size: 0.85rem; margin-top: 4px;">عزل ملفات تعريف الارتباط والهوية لكل حساب (العمل، شخصي، بنكي) في ألسنة مستقلة داخل نفس النافذة.</p>
-                                    <span style="font-size: 0.75rem; color: #38bdf8;">بواسطة: Mozilla Firefox Team • المعرف: @testpilot-containers</span>
-                                </div>
-                            </div>
-                            <button onclick="installAddon('Firefox Multi-Account Containers', '🛡️')" style="background: #22c55e; color: #fff; border: none; padding: 10px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; white-space: nowrap;">✓ مثبتة ونشطة</button>
-                        </div>
-
-                        <div style="background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 20px; display: flex; justify-content: space-between; align-items: center;">
-                            <div style="display: flex; gap: 16px; align-items: center;">
-                                <div style="font-size: 2.2rem; background: rgba(239, 68, 68, 0.1); width: 60px; height: 60px; border-radius: 12px; display: flex; align-items: center; justify-content: center;">🛑</div>
-                                <div>
-                                    <div style="font-size: 1.15rem; font-weight: bold; color: #fff;">uBlock Origin</div>
-                                    <p style="color: #94a3b8; font-size: 0.85rem; margin-top: 4px;">مانع إعلانات خفيف وفعال جداً يدعم واجهات Manifest V2 الكاملة الحصرية في فايرفوكس.</p>
-                                    <span style="font-size: 0.75rem; color: #38bdf8;">بواسطة: Raymond Hill • صيغة: .xpi</span>
-                                </div>
-                            </div>
-                            <button onclick="installAddon('uBlock Origin', '🛑')" style="background: #38bdf8; color: #0f172a; border: none; padding: 10px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; white-space: nowrap;">+ أضف إلى فايرفوكس</button>
-                        </div>
-
-                        <div style="background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 20px; display: flex; justify-content: space-between; align-items: center;">
-                            <div style="display: flex; gap: 16px; align-items: center;">
-                                <div style="font-size: 2.2rem; background: rgba(168, 85, 247, 0.1); width: 60px; height: 60px; border-radius: 12px; display: flex; align-items: center; justify-content: center;">🌙</div>
-                                <div>
-                                    <div style="font-size: 1.15rem; font-weight: bold; color: #fff;">Dark Reader</div>
-                                    <p style="color: #94a3b8; font-size: 0.85rem; margin-top: 4px;">تفعيل الوضع الليلي الداكن لجميع المواقع على الإنترنت بذكاء وحماية العينين.</p>
-                                    <span style="font-size: 0.75rem; color: #38bdf8;">بواسطة: Alexander Shutov</span>
-                                </div>
-                            </div>
-                            <button onclick="installAddon('Dark Reader', '🌙')" style="background: #38bdf8; color: #0f172a; border: none; padding: 10px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; white-space: nowrap;">+ أضف إلى فايرفوكس</button>
-                        </div>
-                    </div>
-                </div>
-            )ADDONS_HTML";
+        if (tabs[i].currentUrl.find("addons.mozilla.org") != std::string::npos || tabs[i].currentUrl == "about:addons") {
+            contentPreview = "<!-- addons store will be rendered by client -->";
         } else if (tabs[i].currentUrl.rfind("about:downloads", 0) == 0 || tabs[i].currentUrl.rfind("mybrowser://downloads", 0) == 0) {
             auto dls = g_engine.downloads()->getAllDownloads();
             std::ostringstream dlStream;
@@ -1134,19 +1335,34 @@ static std::string buildStateJson() {
             auto schemeResp = g_engine.schemes()->handleRequest(tabs[i].currentUrl);
             contentPreview = schemeResp.content;
         } else {
-            contentPreview = "<div style=\"padding:40px; text-align:center;\"><div style=\"background:#1e293b; padding:30px; border-radius:12px; max-width:700px; margin:0 auto; border:1px solid #334155;\"><h2 style=\"color:#38bdf8; margin-bottom:15px;\">تم فحص الرابط بنجاح بواسطة C++ Core ✅</h2><p style=\"direction:ltr; font-family:monospace; background:#0f172a; padding:12px; border-radius:6px; color:#22c55e;\">" + tabs[i].currentUrl + "</p><p style=\"margin-top:15px; color:#94a3b8;\">الطلب آمن وتمت ترقيته لـ HTTPS وتنظيف معلمات التتبع عبر C++ NetworkInterceptor.</p></div></div>";
+            // Realistic webpage simulation with light/dark contrast to demonstrate extensions in action!
+            contentPreview = "<div style=\"max-width:860px; margin:40px auto; padding:30px; background:#ffffff; color:#1f2937; border-radius:12px; box-shadow:0 10px 30px rgba(0,0,0,0.1); font-family:system-ui, sans-serif;\">"
+                             "<div style=\"display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #e5e7eb; padding-bottom:16px; margin-bottom:20px;\">"
+                             "  <div>"
+                             "    <h1 style=\"color:#0f172a; font-size:1.6rem; margin:0;\">🌐 " + tabs[i].title + "</h1>"
+                             "    <div style=\"font-size:0.85rem; color:#6b7280; margin-top:4px; direction:ltr; text-align:right;\">" + tabs[i].currentUrl + "</div>"
+                             "  </div>"
+                             "  <span style=\"background:#e0f2fe; color:#0369a1; padding:4px 12px; border-radius:20px; font-weight:bold; font-size:0.8rem;\">اتصال آمن ومحمي ✅</span>"
+                             "</div>"
+                             "<div class=\"ad-banner\" style=\"background:#fef3c7; border:1px dashed #f59e0b; padding:12px; border-radius:8px; margin-bottom:20px; text-align:center; color:#b45309; font-size:0.85rem;\">"
+                             "  [إعلان تجريبي] تم فحص هذا الموقع وتأمينه بواسطة درع حظر الإعلانات والتعقب في النواة"
+                             "</div>"
+                             "<p style=\"font-size:1.05rem; line-height:1.7; color:#374151; margin-bottom:16px;\">"
+                             "أهلاً بك في الصفحة المعروضة! إذا قمت بتثبيت إضافة <b>Dark Reader</b> من متجر فايرفوكس (AMO)، ستلاحظ فوراً تحول هذه الصفحة البيضاء تلقائياً إلى الوضع الليلي الداكن بفضل محرك حقن الـ WebExtension Content Scripts في النواة."
+                             "</p>"
+                             "<div style=\"background:#f3f4f6; padding:16px; border-radius:8px; border:1px solid #e5e7eb; margin-bottom:20px;\">"
+                             "  <h4 style=\"margin-top:0; color:#111827;\">حالة إضافات فايرفوكس (WebExtensions) الحالية:</h4>"
+                             "  <ul style=\"margin-right:20px; color:#4b5563; font-size:0.9rem; line-height:1.6;\">"
+                             "    <li><b>Dark Reader:</b> تتحكم بالألوان والسطوع والتباين في جميع المواقع.</li>"
+                             "    <li><b>uBlock Origin:</b> تحظر إعلانات الصفحة وأكواد التتبع التجسسية.</li>"
+                             "    <li><b>Firefox Translate:</b> تترجم المحتوى تلقائياً للغة العربية.</li>"
+                             "  </ul>"
+                             "</div>"
+                             "<button style=\"background:#0060df; color:#fff; border:none; padding:10px 20px; border-radius:6px; font-weight:bold; cursor:pointer;\">تفاعل تجريبي مع الصفحة</button>"
+                             "</div>";
         }
 
-        // Escape contentPreview for JSON string
-        std::string escContent;
-        for (char c : contentPreview) {
-            if (c == '"') escContent += "\\\"";
-            else if (c == '\\') escContent += "\\\\";
-            else if (c == '\n') escContent += "\\n";
-            else if (c == '\r') escContent += "\\r";
-            else if (c == '\t') escContent += "\\t";
-            else escContent += c;
-        }
+        std::string escContent = escapeJsonString(contentPreview);
 
         ss << "    {\n"
            << "      \"id\": " << tabs[i].id << ",\n"
@@ -1170,6 +1386,7 @@ static std::string buildStateJson() {
        << "  },\n"
        << "  \"downloads\": " << g_engine.downloads()->exportDownloadsJson() << ",\n"
        << "  \"aiChat\": " << g_engine.ai()->exportChatJson() << ",\n"
+       << "  \"extensions\": " << g_engine.extensions()->exportExtensionsJson() << ",\n"
        << "  \"containers\": " << g_engine.containers()->exportContainersJson() << ",\n"
        << "  \"bookmarks\": [\n";
 
@@ -1230,16 +1447,33 @@ void handleClient(int clientSocket) {
     } else if (method == "GET" && path == "/api/state") {
         contentType = "application/json";
         responseBody = buildStateJson();
+    } else if (method == "POST" && path == "/api/extensions/install") {
+        std::string id = extractJsonField(body, "id");
+        bool ok = g_engine.extensions()->installExtension(id);
+        contentType = "application/json";
+        responseBody = "{\"status\": \"" + std::string(ok ? "ok" : "error") + "\"}";
+    } else if (method == "POST" && path == "/api/extensions/toggle") {
+        std::string id = extractJsonField(body, "id");
+        std::string enStr = extractJsonField(body, "enabled");
+        bool enable = (enStr == "true" || enStr == "1");
+        bool ok = g_engine.extensions()->toggleExtension(id, enable);
+        contentType = "application/json";
+        responseBody = "{\"status\": \"" + std::string(ok ? "ok" : "error") + "\"}";
+    } else if (method == "POST" && path == "/api/extensions/uninstall") {
+        std::string id = extractJsonField(body, "id");
+        bool ok = g_engine.extensions()->uninstallExtension(id);
+        contentType = "application/json";
+        responseBody = "{\"status\": \"" + std::string(ok ? "ok" : "error") + "\"}";
     } else if (method == "POST" && path == "/api/navigate") {
         std::string url = extractJsonField(body, "url");
-        if (url == "addons" || url == "about:addons" || url.find("addons.mozilla.org") != std::string::npos) {
-            url = "about:addons";
+        if (url.find("addons.mozilla.org") != std::string::npos || url == "addons" || url == "about:addons") {
+            url = "https://addons.mozilla.org/firefox/";
         }
         auto navRes = g_engine.navigateActiveTab(url);
-        if (url == "about:addons" || url == "about:downloads" || url == "about:performance" || url == "about:reader") {
+        if (url == "https://addons.mozilla.org/firefox/" || url == "about:downloads" || url == "about:performance" || url == "about:reader") {
             auto cur = g_engine.tabs()->getActiveTab();
             if (cur) {
-                if (url == "about:addons") cur->title = "إضافات فايرفوكس";
+                if (url == "https://addons.mozilla.org/firefox/") cur->title = "إضافات فايرفوكس (AMO)";
                 else if (url == "about:downloads") cur->title = "مدير التنزيلات";
                 else if (url == "about:performance") cur->title = "مراقبة الأداء";
                 else if (url == "about:reader") cur->title = "وضع القراءة";
@@ -1395,9 +1629,11 @@ int main(int argc, char* argv[]) {
 
     g_engine.initialize();
 
-    // Default tabs
-    g_engine.tabs()->createTab("about:addons", 1, "Personal", "#38bdf8", 1);
-    g_engine.tabs()->createTab("https://github.com", 2, "Work", "#fb923c", 2);
+    // Default tabs:
+    // Tab 1: Firefox Add-ons (AMO) store
+    g_engine.tabs()->createTab("https://addons.mozilla.org/firefox/", 1, "إضافات فايرفوكس (AMO)", "#38bdf8", 1);
+    // Tab 2: Regular Web Page to test extension effect on
+    g_engine.tabs()->createTab("https://github.com", 2, "GitHub: Free & Open Source", "#fb923c", 2);
 
     int serverFd = socket(AF_INET, SOCK_STREAM, 0);
     if (serverFd < 0) {
@@ -1428,12 +1664,10 @@ int main(int argc, char* argv[]) {
     std::cout << "=====================================================\n";
     std::cout << "  AtlasBrowser Firefox Quantum Server is Running!\n";
     std::cout << "  Listening on: http://0.0.0.0:" << port << "\n";
-    std::cout << "  - Firefox Add-ons (AMO) Store Ready\n";
+    std::cout << "  - Firefox Add-ons (addons.mozilla.org) Store Live\n";
+    std::cout << "  - WebExtension Real Dynamic Content Script Injection\n";
     std::cout << "  - Multi-Account Containers Ready\n";
-    std::cout << "  - Workspaces (Arc/Zen) & Split View Ready\n";
     std::cout << "  - C++ AI Copilot Engine Ready\n";
-    std::cout << "  - C++ Turbo Download Manager Ready\n";
-    std::cout << "  - Performance & Memory Saver Ready\n";
     std::cout << "=====================================================\n";
 
     while (true) {

@@ -15,6 +15,7 @@
 #include "DownloadManager.hpp"
 #include "PerformanceMonitor.hpp"
 #include "ReaderModeEngine.hpp"
+#include "ExtensionRuntime.hpp"
 #include <memory>
 #include <string>
 
@@ -55,6 +56,7 @@ public:
     std::shared_ptr<AiAssistantEngine> ai() const { return m_aiEngine; }
     std::shared_ptr<DownloadManager> downloads() const { return m_downloadManager; }
     std::shared_ptr<PerformanceMonitor> performance() const { return m_perfMonitor; }
+    std::shared_ptr<ExtensionRuntime> extensions() const { return m_extensionRuntime; }
     std::shared_ptr<AdBlocker> adBlocker() const { return m_adBlocker; }
     std::shared_ptr<NetworkInterceptor> network() const { return m_networkInterceptor; }
     std::shared_ptr<SchemeHandlerRegistry> schemes() const { return m_schemeRegistry; }
@@ -86,6 +88,7 @@ private:
     std::shared_ptr<AiAssistantEngine> m_aiEngine;
     std::shared_ptr<DownloadManager> m_downloadManager;
     std::shared_ptr<PerformanceMonitor> m_perfMonitor;
+    std::shared_ptr<ExtensionRuntime> m_extensionRuntime;
     bool m_initialized = false;
 };
 

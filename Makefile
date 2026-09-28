@@ -15,6 +15,7 @@ CORE_SRC = src/browser_core/AdBlocker.cpp \
            src/browser_core/DownloadManager.cpp \
            src/browser_core/PerformanceMonitor.cpp \
            src/browser_core/ReaderModeEngine.cpp \
+           src/browser_core/ExtensionRuntime.cpp \
            src/browser_core/BrowserEngine.cpp
 
 CLI_SRC = src/browser_core/main.cpp
