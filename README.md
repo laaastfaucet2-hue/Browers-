@@ -75,11 +75,13 @@ Browers-/
 │   ├── PasswordVault.hpp              # الخزنة المشفرة ومولد كلمات المرور
 │   ├── PerformanceMonitor.hpp         # مراقبة الرام وتوفير الطاقة
 │   ├── PrivacyShield.hpp              # درع مكافحة البصمة الرقمية
+│   ├── ProfileManager.hpp             # إدارة 200 بروفايل وجهاز افتراضي معزول
 │   ├── ReaderModeEngine.hpp           # محرك وضع القراءة والتركيز
 │   ├── SchemeHandler.hpp              # مسارات بروتوكولات about: و mybrowser://
 │   ├── ScratchpadEngine.hpp           # لوحة الملاحظات وقصاصات الويب
 │   ├── TabGroupManager.hpp            # مجلدات الألسنة الملونة الذكية
 │   ├── TabManager.hpp                 # إدارة الألسنة وتقسيم الشاشة
+│   ├── VirtualDeviceProfile.hpp       # بنية الجهاز الافتراضي وتزييف العتاد والـ Canvas
 │   └── WorkspaceManager.hpp           # إدارة مساحات العمل (Arc/Zen)
 ├── src/
 │   ├── browser_core/                  # التنفيذ البرمجي المكتبي للنواة (C++20)
@@ -90,6 +92,22 @@ Browers-/
 
 ---
 
+## 💻 نظام الأجهزة الافتراضية المعزولة (200 Virtual Device Profiles - Anti-Detect)
+
+تم تزويد المتصفح بمحرك متقدم لإدارة حتى **200 بيئة تصفح وجهاز افتراضي متزامن**:
+1. **عزل كلي للتخزين والجلسات (Storage & Cookies Sandbox):**
+   - لكل جهاز افتراضي مسار مستقل تماماً (`profiles/virtual_device_X/`) لملفات تعريف الارتباط، التخزين المحلي (LocalStorage)، وقواعد بيانات IndexedDB.
+2. **تزييف عميق للبصمة العتادية (Deep Hardware Anti-Detect):**
+   - **WebGL Renderer & Vendor Spoofing:** تزييف كرت الشاشة الحقيقي (NVIDIA GeForce RTX 4090, Apple M3 Max, AMD Radeon RX 7900, Intel UHD Graphics) وتجاوز استعلامات `WEBGL_debug_renderer_info`.
+   - **Canvas Noise Farbling:** حقن تشويش دقيق ومحسوب في مصفوفة بكسلات الـ HTML5 Canvas لتوليد قيمة Hash مشوشة وفريدة لكل جهاز افتراضي مع الحفاظ على سلامة الرسوم.
+   - **AudioContext Micro-Frequency Shift:** تزييف منحنى ترددات الصوت بمقدار ميكروي فريد يمنع التعرف على كرت الصوت الفعلي.
+   - **Hardware Concurrency & Device Memory:** تزييف عدد الأنوية (8, 12, 16, 24 Cores) وحجم الرام (16GB, 32GB, 64GB) وأبعاد الشاشة ونسبة البكسل (DPR).
+   - **ملاحظة:** تم استثناء عنوان الـ IP والبروكسي حالياً استجابةً لتوجيهاتكم الصريحة، مع التركيز الصارم على حماية البصمة العتادية والجهازية.
+3. **شاشة العرض المتعددة المتزامنة (Multi-Device Matrix Grid):**
+   - إمكانية تشغيل متصفحات متعددة جنباً إلى جنب في نفس الواجهة كأجهزة وأنظمة تشغيل مستقلة كلياً.
+
+---
+
 ## 🚀 البناء والتشغيل والاختبارات الآلية
 
 ### 1. البناء والترجمة:
@@ -97,7 +115,7 @@ Browers-/
 make clean && make all
 ```
 
-### 2. تشغيل حزمة الفحص الآلي الشاملة (43/43 اختبار ناجح):
+### 2. تشغيل حزمة الفحص الآلي الشاملة (50/50 اختبار ناجح):
 ```bash
 make test
 ```

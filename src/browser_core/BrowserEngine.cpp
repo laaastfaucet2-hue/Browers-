@@ -31,6 +31,7 @@ void BrowserEngine::initialize() {
     m_tabGroupManager = std::make_shared<TabGroupManager>();
     m_scratchpadEngine = std::make_shared<ScratchpadEngine>();
     m_hardwareLimiter = std::make_shared<HardwareLimiter>();
+    m_profileManager = std::make_shared<ProfileManager>(200);
 
     setupInternalSchemes();
     setupJsBridgeApis();
@@ -89,6 +90,22 @@ void BrowserEngine::setupInternalSchemes() {
         resp.statusCode = 200;
         resp.mimeType = "text/html; charset=utf-8";
         resp.content = m_perfMonitor->generatePerformanceHtml(metrics);
+        return resp;
+    });
+
+    m_schemeRegistry->registerHandler("mybrowser", "devices", [this](const std::string&, const std::string&) {
+        SchemeResponse resp;
+        resp.statusCode = 200;
+        resp.mimeType = "text/html; charset=utf-8";
+        resp.content = m_profileManager->renderFingerprintTestHtml();
+        return resp;
+    });
+
+    m_schemeRegistry->registerHandler("mybrowser", "fingerprint", [this](const std::string&, const std::string&) {
+        SchemeResponse resp;
+        resp.statusCode = 200;
+        resp.mimeType = "text/html; charset=utf-8";
+        resp.content = m_profileManager->renderFingerprintTestHtml();
         return resp;
     });
 }

@@ -271,6 +271,34 @@ void runTests(BrowserEngine& engine) {
         assertTest("Floating Media Engine: Picture-in-Picture speed control (1.5x)", pip.isPipActive && pip.playbackRate == 1.5);
     }
 
+    // 20. Multi-Device Anti-Detect Profile Manager (200 Isolated Profiles)
+    {
+        size_t totalProfiles = engine.profiles()->getProfileCount();
+        assertTest("Anti-Detect Manager: 200 virtual device profiles initialized in pool", totalProfiles >= 200);
+
+        const auto* p1 = engine.profiles()->getProfile(1);
+        const auto* p2 = engine.profiles()->getProfile(2);
+        assertTest("Anti-Detect Manager: Profile #1 and #2 exist with distinct OS & Hardware", 
+                   p1 != nullptr && p2 != nullptr && p1->osType != p2->osType);
+
+        assertTest("Anti-Detect Manager: Hardware Fingerprint divergence (Canvas & Audio Seeds distinct)",
+                   p1->canvasNoiseSeed != p2->canvasNoiseSeed && p1->audioNoiseShift != p2->audioNoiseShift);
+
+        assertTest("Anti-Detect Manager: WebGL GPU divergence (Unmasked Vendor & Renderer distinct)",
+                   p1->webglRenderer != p2->webglRenderer && p1->webglVendor != p2->webglVendor);
+
+        assertTest("Anti-Detect Manager: Storage Sandbox directory isolation",
+                   p1->storageDirectory != p2->storageDirectory);
+
+        bool switched = engine.profiles()->switchActiveProfile(42);
+        assertTest("Anti-Detect Manager: Instant profile switching to Profile #42", 
+                   switched && engine.profiles()->getActiveProfile()->id == 42);
+
+        std::string script = engine.profiles()->getActiveAntiDetectScript();
+        assertTest("Anti-Detect Manager: Anti-detect injection script generation for DOM",
+                   script.find("[Atlas Anti-Detect]") != std::string::npos && script.find("hardwareConcurrency") != std::string::npos);
+    }
+
     std::cout << "\n\033[1;36mResult: " << passed << " of " << total << " tests passed successfully!\033[0m\n\n";
 }
 

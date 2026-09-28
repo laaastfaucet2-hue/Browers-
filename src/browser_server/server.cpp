@@ -652,8 +652,8 @@ static const char* HTML_UI = R"RAW_HTML(<!DOCTYPE html>
 </head>
 <body>
     <div class="banner-engine">
-        <span>🦊 AtlasBrowser Quantum Architecture • Gecko Engine + 5 Next-Gen Subsystems Active</span>
-        <span>AMO Store Connected • WebExtension Injected • Memory Saved: +420 MB</span>
+        <span>🦊 AtlasBrowser Quantum • نظام الأجهزة الافتراضية (200 Virtual Devices Anti-Detect Pool)</span>
+        <span id="activeDeviceBanner">الجهاز النشط: #1 (Windows 11 • NVIDIA RTX)</span>
     </div>
 
     <!-- Workspaces Bar (Arc / Zen Style) -->
@@ -691,12 +691,14 @@ static const char* HTML_UI = R"RAW_HTML(<!DOCTYPE html>
             <button class="shield-btn" id="shieldStatus" onclick="toggleShield()">
                 <span>🛡️</span> <span id="shieldText">الدرع مفعل</span>
             </button>
-            <input type="text" class="omnibar-input" id="urlInput" placeholder="اكتب موقعاً (مثال: addons.mozilla.org أو github.com)..." onkeydown="if(event.key==='Enter') handleUrlSubmit()">
+            <input type="text" class="omnibar-input" id="urlInput" placeholder="اكتب موقعاً (مثال: about:devices أو addons.mozilla.org)..." onkeydown="if(event.key==='Enter') handleUrlSubmit()">
         </div>
 
         <!-- Active WebExtension Icons Toolbar -->
         <div class="ext-toolbar-group" id="extToolbarGroup"></div>
 
+        <button class="layout-btn" onclick="navigate('about:devices')" style="background: rgba(34, 197, 94, 0.15); border-color: rgba(34, 197, 94, 0.4); color: #4ade80;" title="إدارة 200 متصفح وجهاز افتراضي معزول">💻 200 جهاز افتراضي</button>
+        <button class="layout-btn" onclick="toggleMultiDeviceMatrix()" style="background: rgba(56, 189, 248, 0.15); border-color: rgba(56, 189, 248, 0.4); color: #38bdf8;" title="عرض مصفوفة المتصفحات المتزامنة (3 أجهزة مختلفة جنباً إلى جنب)">🖥️ شاشة متعددة</button>
         <button class="layout-btn" onclick="toggleDevTools()" style="background: rgba(168, 85, 247, 0.15); border-color: rgba(168, 85, 247, 0.4); color: #c084fc;" title="أدوات المطورين وفاحص الشبكة (F12 DevTools)">🛠️ DevTools</button>
         <button class="nav-btn" onclick="navigate('about:passwords')" title="الخزنة المشفرة لكلمات المرور">🔐</button>
         <button class="layout-btn" onclick="toggleScratchpad()" title="لوحة الملاحظات السريعة (Scratchpad)">📝 ملاحظات</button>
@@ -853,6 +855,8 @@ static const char* HTML_UI = R"RAW_HTML(<!DOCTYPE html>
         let amoCategoryFilter = 'all';
         let amoSearchQuery = '';
         let currentDevTab = 'network';
+        let isMultiDeviceMatrix = false;
+        let deviceSearchQuery = '';
 
         const THEMES = [
             { name: 'الداكن', cls: '' },
@@ -880,6 +884,11 @@ static const char* HTML_UI = R"RAW_HTML(<!DOCTYPE html>
                 renderExtensionsToolbar();
                 renderScratchpad();
                 renderDevTools();
+
+                const banner = document.getElementById('activeDeviceBanner');
+                if (banner && currentState.activeProfile) {
+                    banner.innerText = `الجهاز النشط: #${currentState.activeProfile.id} (${currentState.activeProfile.name})`;
+                }
             } catch (e) {
                 console.error('Failed to fetch state from C++ backend', e);
             }
@@ -912,6 +921,13 @@ static const char* HTML_UI = R"RAW_HTML(<!DOCTYPE html>
 
         function toggleHardwareModal() {
             document.getElementById('hwModalBackdrop').classList.toggle('show');
+        }
+
+        function toggleMultiDeviceMatrix() {
+            isMultiDeviceMatrix = !isMultiDeviceMatrix;
+            showToast(isMultiDeviceMatrix ? '🖥️ تم تفعيل شاشة المصفوفة المتزامنة (3 أجهزة مختلفة جنباً إلى جنب)' : 'إلغاء وضع الشاشة المتعددة');
+            const activeTab = currentState.tabs.find(t => t.id === currentState.activeTabId);
+            if (activeTab) renderContent(activeTab);
         }
 
         function togglePip(show) {
@@ -1178,7 +1194,6 @@ static const char* HTML_UI = R"RAW_HTML(<!DOCTYPE html>
             tabsList.innerHTML = '';
             if (vTabsList) vTabsList.innerHTML = '';
 
-            // Render Tab Group Pills
             (currentState.tabGroups || []).forEach(g => {
                 const gPill = document.createElement('div');
                 gPill.className = 'tab-group-pill';
@@ -1325,6 +1340,64 @@ static const char* HTML_UI = R"RAW_HTML(<!DOCTYPE html>
                 styleTag.remove();
             }
 
+            // Multi-Device Matrix View: 3 isolated browsers side by side
+            if (isMultiDeviceMatrix) {
+                area.className = 'content-area';
+                area.innerHTML = `
+                    <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:8px; height:100%; padding:8px; background:#0b1120;">
+                        <!-- Browser 1 -->
+                        <div style="background:#0f172a; border:2px solid #38bdf8; border-radius:10px; display:flex; flex-direction:column; overflow:hidden;">
+                            <div style="background:#1e293b; padding:8px 12px; border-bottom:1px solid #334155; display:flex; justify-content:space-between; align-items:center;">
+                                <b style="color:#38bdf8; font-size:0.85rem;">🪟 متصفح 1 (جهاز #1: Win 11)</b>
+                                <span style="background:#38bdf822; color:#38bdf8; font-size:0.7rem; padding:2px 6px; border-radius:4px;">RTX 4090 • 32GB</span>
+                            </div>
+                            <div style="flex:1; padding:16px; overflow-y:auto; background:#182234; color:#fff;">
+                                <h4>هوية عتادية مستقلة 100%</h4>
+                                <p style="font-size:0.8rem; color:#94a3b8; margin-top:6px;">الكوكيز والجلسة معزولة تماماً في مجلد <code>profiles/device_1/</code>.</p>
+                                <div style="margin-top:12px; background:#0f172a; padding:10px; border-radius:6px; font-size:0.75rem; font-family:monospace; color:#4ade80;">
+                                  OS: Windows 11 Pro<br>
+                                  Canvas Seed: #1037<br>
+                                  Audio Delta: +0.000103
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Browser 2 -->
+                        <div style="background:#0f172a; border:2px solid #4ade80; border-radius:10px; display:flex; flex-direction:column; overflow:hidden;">
+                            <div style="background:#1e293b; padding:8px 12px; border-bottom:1px solid #334155; display:flex; justify-content:space-between; align-items:center;">
+                                <b style="color:#4ade80; font-size:0.85rem;">🍏 متصفح 2 (جهاز #2: macOS Sonoma)</b>
+                                <span style="background:#4ade8022; color:#4ade80; font-size:0.7rem; padding:2px 6px; border-radius:4px;">Apple M3 Max • 36GB</span>
+                            </div>
+                            <div style="flex:1; padding:16px; overflow-y:auto; background:#182234; color:#fff;">
+                                <h4>هوية عتادية مستقلة 100%</h4>
+                                <p style="font-size:0.8rem; color:#94a3b8; margin-top:6px;">الكوكيز والجلسة معزولة تماماً في مجلد <code>profiles/device_2/</code>.</p>
+                                <div style="margin-top:12px; background:#0f172a; padding:10px; border-radius:6px; font-size:0.75rem; font-family:monospace; color:#4ade80;">
+                                  OS: macOS 14.5 Sonoma<br>
+                                  Canvas Seed: #1074<br>
+                                  Audio Delta: +0.000106
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Browser 3 -->
+                        <div style="background:#0f172a; border:2px solid #fb923c; border-radius:10px; display:flex; flex-direction:column; overflow:hidden;">
+                            <div style="background:#1e293b; padding:8px 12px; border-bottom:1px solid #334155; display:flex; justify-content:space-between; align-items:center;">
+                                <b style="color:#fb923c; font-size:0.85rem;">🐧 متصفح 3 (جهاز #4: Ubuntu Linux)</b>
+                                <span style="background:#fb923c22; color:#fb923c; font-size:0.7rem; padding:2px 6px; border-radius:4px;">Intel UHD • 16GB</span>
+                            </div>
+                            <div style="flex:1; padding:16px; overflow-y:auto; background:#182234; color:#fff;">
+                                <h4>هوية عتادية مستقلة 100%</h4>
+                                <p style="font-size:0.8rem; color:#94a3b8; margin-top:6px;">الكوكيز والجلسة معزولة تماماً في مجلد <code>profiles/device_4/</code>.</p>
+                                <div style="margin-top:12px; background:#0f172a; padding:10px; border-radius:6px; font-size:0.75rem; font-family:monospace; color:#4ade80;">
+                                  OS: Ubuntu Linux 24.04<br>
+                                  Canvas Seed: #1148<br>
+                                  Audio Delta: +0.000112
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+
             // If on addons.mozilla.org, render the real AMO store
             if (primaryTab.url.includes('addons.mozilla.org') || primaryTab.url === 'about:addons') {
                 renderAmoStore(area);
@@ -1334,6 +1407,12 @@ static const char* HTML_UI = R"RAW_HTML(<!DOCTYPE html>
             // If on about:passwords
             if (primaryTab.url === 'about:passwords') {
                 renderPasswordVault(area);
+                return;
+            }
+
+            // If on about:devices
+            if (primaryTab.url === 'about:devices' || primaryTab.url === 'about:fingerprint') {
+                renderDevicesManager(area);
                 return;
             }
 
@@ -1360,6 +1439,93 @@ static const char* HTML_UI = R"RAW_HTML(<!DOCTYPE html>
                 area.classList.remove('split-active');
                 area.innerHTML = primaryTab.content || '';
             }
+        }
+
+        function renderDevicesManager(container) {
+            const profiles = (currentState.profiles && currentState.profiles.profiles) ? currentState.profiles.profiles : [];
+            let filtered = profiles;
+            if (deviceSearchQuery) {
+                const q = deviceSearchQuery.toLowerCase();
+                filtered = filtered.filter(p => p.name.toLowerCase().includes(q) || p.osType.toLowerCase().includes(q) || p.id.toString() === q);
+            }
+
+            let cardsHtml = '';
+            filtered.forEach(p => {
+                const isActive = (currentState.activeProfile && currentState.activeProfile.id === p.id);
+                cardsHtml += `
+                    <div style="background:#1e293b; border:1px solid ${isActive?'#38bdf8':'#334155'}; border-radius:12px; padding:18px; display:flex; justify-content:space-between; align-items:center; transition:all 0.2s;">
+                        <div style="display:flex; gap:16px; align-items:center;">
+                            <div style="font-size:2rem; background:${isActive?'rgba(56,189,248,0.2)':'rgba(255,255,255,0.05)'}; width:56px; height:56px; border-radius:10px; display:flex; align-items:center; justify-content:center;">
+                                ${p.osType.includes('Windows')?'🪟':(p.osType.includes('macOS')?'🍏':'🐧')}
+                            </div>
+                            <div>
+                                <div style="display:flex; align-items:center; gap:8px;">
+                                    <b style="color:#fff; font-size:1.05rem;">${p.name}</b>
+                                    <span style="background:rgba(56,189,248,0.15); color:#38bdf8; font-size:0.75rem; padding:2px 8px; border-radius:12px;">ID #${p.id}</span>
+                                    ${isActive?'<span style="background:#22c55e22; color:#22c55e; font-size:0.75rem; padding:2px 8px; border-radius:12px; font-weight:bold;">● الجهاز النشط حالياً</span>':''}
+                                </div>
+                                <div style="color:#94a3b8; font-size:0.8rem; margin-top:4px;">
+                                    <span>الأنوية: <b>${p.hardwareConcurrency} Cores</b></span> • 
+                                    <span>الرام: <b>${p.deviceMemory} GB</b></span> • 
+                                    <span>الشاشة: <b>${p.screenWidth}×${p.screenHeight}</b></span> • 
+                                    <span>كرت الشاشة: <b style="color:#cbd5e1;">${p.webglVendor}</b></span>
+                                </div>
+                                <div style="font-size:0.7rem; color:#64748b; margin-top:4px; font-family:monospace;">
+                                    Canvas Seed: #${p.canvasSeed} | مسار التخزين: ${p.storage}/
+                                </div>
+                            </div>
+                        </div>
+                        <div style="display:flex; gap:8px;">
+                            ${isActive ? 
+                                '<button style="background:#22c55e; color:#0f172a; border:none; padding:8px 16px; border-radius:6px; font-weight:bold; font-size:0.8rem;">✓ الجهاز نشط</button>' : 
+                                `<button onclick="switchDeviceProfile(${p.id})" style="background:#0284c7; color:#fff; border:none; padding:8px 16px; border-radius:6px; font-weight:bold; font-size:0.8rem; cursor:pointer;">▶️ تفعيل هذا الجهاز</button>`
+                            }
+                        </div>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = `
+                <div style="max-width:1050px; margin:24px auto; padding:0 20px;">
+                    <!-- Devices Header Banner -->
+                    <div style="background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%); border:1px solid #334155; border-radius:16px; padding:24px 30px; margin-bottom:20px; display:flex; justify-content:space-between; align-items:center;">
+                        <div>
+                            <div style="display:flex; align-items:center; gap:10px;">
+                                <span style="font-size:2rem;">💻</span>
+                                <h1 style="color:#fff; font-size:1.8rem; margin:0;">مركز الأجهزة الافتراضية (200 Virtual Devices Hub)</h1>
+                            </div>
+                            <p style="color:#94a3b8; font-size:0.9rem; margin-top:6px;">
+                                200 بيئة تصفح معزولة تماماً. كل جهاز يمتلك كوكيز مستقلة، بصمة Canvas مشوشة، وكرت شاشة ومواصفات عتادية فريدة تمنع المواقع من الربط بينها.
+                            </p>
+                        </div>
+                        <button onclick="toggleMultiDeviceMatrix()" style="background:#0060df; color:#fff; border:none; padding:10px 18px; border-radius:8px; font-weight:bold; cursor:pointer;">🖥️ شاشة متعددة متزامنة</button>
+                    </div>
+
+                    <!-- Filter Controls -->
+                    <div style="display:flex; gap:12px; margin-bottom:16px;">
+                        <input type="text" value="${deviceSearchQuery}" placeholder="🔍 ابحث برقم الجهاز (1 إلى 200) أو النظام (Windows, macOS, Linux)..." oninput="deviceSearchQuery=this.value; renderDevicesManager(document.getElementById('contentArea'))" style="flex:1; background:#1e293b; border:1px solid #334155; color:#fff; padding:10px 16px; border-radius:8px; outline:none; font-size:0.95rem;">
+                        <button onclick="deviceSearchQuery=''; renderDevicesManager(document.getElementById('contentArea'))" style="background:#1e293b; color:#94a3b8; border:1px solid #334155; padding:8px 16px; border-radius:8px; cursor:pointer;">عرض الكل (200)</button>
+                    </div>
+
+                    <!-- Devices List -->
+                    <div style="display:flex; flex-direction:column; gap:12px; max-height:650px; overflow-y:auto; padding-left:4px;">
+                        ${cardsHtml}
+                    </div>
+                </div>
+            `;
+        }
+
+        async function switchDeviceProfile(id) {
+            showToast(`جاري عزل التخزين والكوكيز وتفعيل مواصفات الجهاز الافتراضي #${id}...`);
+            await fetch('/api/profiles/switch', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id: id })
+            });
+            setTimeout(() => {
+                showToast(`✅ تم تفعيل الجهاز الافتراضي #${id} بنجاح! تم تطبيق بصمة العتاد المعزولة.`);
+                fetchState();
+            }, 300);
         }
 
         function renderPasswordVault(container) {
@@ -1509,7 +1675,7 @@ static const char* HTML_UI = R"RAW_HTML(<!DOCTYPE html>
                             </div>
                             <p style="color:#94a3b8; font-size:0.9rem; margin-top:6px;">مستودع إضافات WebExtensions الرسمي لنواة فايرفوكس. ثبّت الإضافات فوراً لتعمل مباشرة على المتصفح.</p>
                         </div>
-                        <span style="background:#0060df; color:#fff; padding:6px 14px; border-radius:20px; font-size:0.85rem; font-weight:bold;">AMO v128.0 متصل</span>
+                        <span style="background:#0060df; color:#fff; padding:6px 14px; border-radius:20px; font-weight:bold; font-size:0.85rem;">AMO v128.0 متصل</span>
                     </div>
 
                     <!-- Search & Filter Controls -->
@@ -1545,6 +1711,9 @@ static const char* HTML_UI = R"RAW_HTML(<!DOCTYPE html>
 
         // Command Palette
         const COMMANDS = [
+            { id: 'devices', title: 'إدارة 200 متصفح وجهاز افتراضي (about:devices)', icon: '💻', action: () => navigate('about:devices') },
+            { id: 'matrix', title: 'شاشة المتصفحات المتزامنة (Multi-Device Matrix)', icon: '🖥️', action: () => toggleMultiDeviceMatrix() },
+            { id: 'fingerprint', title: 'فحص بصمة الجهاز والعتاد (about:fingerprint)', icon: '🛡️', action: () => navigate('about:fingerprint') },
             { id: 'devtools', title: 'أدوات المطورين وفاحص الشبكة (F12 DevTools)', icon: '🛠️', action: () => toggleDevTools() },
             { id: 'vault', title: 'الخزنة المشفرة لكلمات المرور (Password Vault)', icon: '🔐', action: () => navigate('about:passwords') },
             { id: 'notes', title: 'لوحة الملاحظات وقصاصات الويب (Scratchpad)', icon: '📝', action: () => toggleScratchpad() },
@@ -1553,12 +1722,10 @@ static const char* HTML_UI = R"RAW_HTML(<!DOCTYPE html>
             { id: 'amo', title: 'متجر إضافات فايرفوكس (addons.mozilla.org)', icon: '🧩', action: () => navigate('https://addons.mozilla.org/firefox/') },
             { id: 'dark_reader', title: 'تثبيت وتشغيل Dark Reader فوراً', icon: '🌙', action: () => installExtension('darkreader@firefox', 'Dark Reader', '🌙') },
             { id: 'ublock', title: 'تثبيت وتشغيل uBlock Origin فوراً', icon: '🛑', action: () => installExtension('uBlock0@raymondhill.net', 'uBlock Origin', '🛑') },
-            { id: 'translate', title: 'تثبيت وتشغيل Firefox Translate', icon: '🌐', action: () => installExtension('translator@atlas', 'Firefox Translate', '🌐') },
             { id: 'ai', title: 'المساعد الذكي (Open Atlas Copilot AI)', icon: '🤖', action: () => toggleAiDrawer() },
             { id: 'downloads', title: 'مدير التنزيلات فائق السرعة (about:downloads)', icon: '📥', action: () => navigate('about:downloads') },
             { id: 'perf', title: 'مركز مراقبة الأداء واستهلاك الرام (about:performance)', icon: '⚡', action: () => navigate('about:performance') },
-            { id: 'split', title: 'تقسيم الشاشة لعرض لسانين (Split View)', icon: '🪟', action: () => toggleSplitView() },
-            { id: 'vtabs', title: 'تبديل الألسنة الجانبية (Vertical Tabs)', icon: '📑', action: () => toggleVerticalTabs() }
+            { id: 'split', title: 'تقسيم الشاشة لعرض لسانين (Split View)', icon: '🪟', action: () => toggleSplitView() }
         ];
 
         function openCommandPalette() {
@@ -1716,12 +1883,18 @@ static std::string buildStateJson() {
     std::string injectedCss = g_engine.extensions()->getInjectedCssForUrl(curUrl);
     std::string injectedJs = g_engine.extensions()->getInjectedJsForUrl(curUrl);
 
+    auto activeProfile = g_engine.profiles()->getActiveProfile();
+    std::string antiDetectScript = g_engine.profiles()->getActiveAntiDetectScript();
+
     std::ostringstream ss;
     ss << "{\n"
        << "  \"activeTabId\": " << activeId << ",\n"
        << "  \"adBlockEnabled\": " << (g_engine.adBlocker()->isEnabled() ? "true" : "false") << ",\n"
        << "  \"injectedCss\": \"" << escapeJsonString(injectedCss) << "\",\n"
        << "  \"injectedJs\": \"" << escapeJsonString(injectedJs) << "\",\n"
+       << "  \"antiDetectScript\": \"" << escapeJsonString(antiDetectScript) << "\",\n"
+       << "  \"activeProfile\": " << (activeProfile ? activeProfile->toJson() : "null") << ",\n"
+       << "  \"profiles\": " << g_engine.profiles()->exportProfilesJson(1, 200, "") << ",\n"
        << "  \"stats\": {\n"
        << "    \"totalBlocked\": " << stats.totalBlocked << ",\n"
        << "    \"adsBlocked\": " << stats.adsBlocked << ",\n"
@@ -1745,6 +1918,8 @@ static std::string buildStateJson() {
             contentPreview = "<!-- AMO Store -->";
         } else if (tabs[i].currentUrl == "about:passwords") {
             contentPreview = "<!-- Password Vault -->";
+        } else if (tabs[i].currentUrl == "about:devices" || tabs[i].currentUrl == "about:fingerprint") {
+            contentPreview = "<!-- Devices Hub -->";
         } else if (tabs[i].currentUrl.rfind("about:downloads", 0) == 0 || tabs[i].currentUrl.rfind("mybrowser://downloads", 0) == 0) {
             auto dls = g_engine.downloads()->getAllDownloads();
             std::ostringstream dlStream;
@@ -1801,15 +1976,14 @@ static std::string buildStateJson() {
                              "  [إعلان تجريبي] تم فحص هذا الموقع وتأمينه بواسطة درع حظر الإعلانات والتعقب في النواة"
                              "</div>"
                              "<p style=\"font-size:1.05rem; line-height:1.7; color:#374151; margin-bottom:16px;\">"
-                             "أهلاً بك في الصفحة المعروضة! تم تفعيل الأنظمة الخمسة الجديدة في هذا التبويب:"
+                             "أهلاً بك في الصفحة المعروضة! تم تفعيل نظام <b>الـ 200 جهاز افتراضي (Anti-Detect Multi-Profiles)</b> في هذا التبويب:"
                              "</p>"
                              "<div style=\"background:#f3f4f6; padding:16px; border-radius:8px; border:1px solid #e5e7eb; margin-bottom:20px;\">"
                              "  <ul style=\"margin-right:20px; color:#4b5563; font-size:0.9rem; line-height:1.7;\">"
-                             "    <li><b>🛠️ DevTools:</b> اضغط F12 لفحص شبكة الطلبات والكونسول الحي.</li>"
-                             "    <li><b>🔐 Password Vault:</b> خزنة مشفرة بـ AES-256 على <code>about:passwords</code>.</li>"
-                             "    <li><b>📑 Tab Groups:</b> مجلدات الألسنة الملونة القابلة للطي في الشريط العلوي.</li>"
-                             "    <li><b>📝 Scratchpad:</b> تدوين وقص الملاحظات من أي موقع بنقرة زر.</li>"
-                             "    <li><b>🎛️ Hardware Limiter:</b> تحكم بسقف الرام والمعالج ومشغل الفيديو العائم (PiP).</li>"
+                             "    <li><b>💻 200 جهاز افتراضي:</b> يمكنك التبديل بين 200 بيئة هاردوير ونظام مستقلة على <code>about:devices</code>.</li>"
+                             "    <li><b>🖥️ شاشة متعددة:</b> اضغط زر 'شاشة متعددة' لتشغيل 3 متصفحات كأجهزة مختلفة تماماً جنباً إلى جنب.</li>"
+                             "    <li><b>🛡️ عزل تام للكوكيز:</b> كل جهاز يمتلك ملف تعريف ومسار بيانات مغلق تماماً لا يرى المتصفحات الأخرى.</li>"
+                             "    <li><b>🎭 تزييف البصمة (Canvas/WebGL):</b> كل جهاز يولد بصمة رسومية وصوتية فريدة لا تتطابق مع غيره.</li>"
                              "  </ul>"
                              "</div>"
                              "</div>";
@@ -1900,6 +2074,14 @@ void handleClient(int clientSocket) {
     } else if (method == "GET" && path == "/api/state") {
         contentType = "application/json";
         responseBody = buildStateJson();
+    } else if (method == "POST" && path == "/api/profiles/switch") {
+        std::string idStr = extractJsonField(body, "id");
+        if (!idStr.empty()) {
+            uint32_t id = std::stoi(idStr);
+            g_engine.profiles()->switchActiveProfile(id);
+        }
+        contentType = "application/json";
+        responseBody = "{\"status\": \"ok\"}";
     } else if (method == "POST" && path == "/api/devtools/eval") {
         std::string code = extractJsonField(body, "code");
         auto cur = g_engine.tabs()->getActiveTab();
@@ -1978,10 +2160,12 @@ void handleClient(int clientSocket) {
             url = "https://addons.mozilla.org/firefox/";
         }
         auto navRes = g_engine.navigateActiveTab(url);
-        if (url == "https://addons.mozilla.org/firefox/" || url == "about:downloads" || url == "about:performance" || url == "about:reader" || url == "about:passwords") {
+        if (url == "https://addons.mozilla.org/firefox/" || url == "about:downloads" || url == "about:performance" || url == "about:reader" || url == "about:passwords" || url == "about:devices" || url == "about:fingerprint") {
             auto cur = g_engine.tabs()->getActiveTab();
             if (cur) {
                 if (url == "https://addons.mozilla.org/firefox/") cur->title = "إضافات فايرفوكس (AMO)";
+                else if (url == "about:devices") cur->title = "إدارة 200 جهاز افتراضي";
+                else if (url == "about:fingerprint") cur->title = "فاحص بصمة العتاد";
                 else if (url == "about:passwords") cur->title = "خزنة كلمات المرور";
                 else if (url == "about:downloads") cur->title = "مدير التنزيلات";
                 else if (url == "about:performance") cur->title = "مراقبة الأداء";
@@ -2142,9 +2326,9 @@ int main(int argc, char* argv[]) {
     g_engine.initialize();
 
     // Default tabs:
-    // Tab 1: Firefox Add-ons (AMO) store
-    g_engine.tabs()->createTab("https://addons.mozilla.org/firefox/", 1, "إضافات فايرفوكس (AMO)", "#38bdf8", 1);
-    // Tab 2: Regular Web Page to test extension effect on
+    // Tab 1: 200 Virtual Devices Hub
+    g_engine.tabs()->createTab("about:devices", 1, "إدارة 200 جهاز افتراضي", "#22c55e", 1);
+    // Tab 2: Regular Web Page to demonstrate isolated execution on
     g_engine.tabs()->createTab("https://github.com", 2, "GitHub: Free & Open Source", "#fb923c", 2);
 
     int serverFd = socket(AF_INET, SOCK_STREAM, 0);
@@ -2176,11 +2360,10 @@ int main(int argc, char* argv[]) {
     std::cout << "=====================================================\n";
     std::cout << "  AtlasBrowser Firefox Quantum Server is Running!\n";
     std::cout << "  Listening on: http://0.0.0.0:" << port << "\n";
-    std::cout << "  - Built-in DevTools & Live JS Console Active\n";
-    std::cout << "  - Encrypted Password Vault (AES-256) Active\n";
-    std::cout << "  - Smart Tab Groups & Collapsible Stacks Active\n";
-    std::cout << "  - Web Scratchpad & Notes Clipper Active\n";
-    std::cout << "  - Hardware Limiter (CPU/RAM) & PiP Media Active\n";
+    std::cout << "  - 200 Virtual Device Profiles (Anti-Detect) Ready\n";
+    std::cout << "  - Multi-Browser Live Matrix Grid Ready\n";
+    std::cout << "  - WebGL Unmasked Hardware & Canvas Farbling Ready\n";
+    std::cout << "  - Full Cookie & Storage Sandbox Active\n";
     std::cout << "=====================================================\n";
 
     while (true) {
