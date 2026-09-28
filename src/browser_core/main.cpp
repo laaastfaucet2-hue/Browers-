@@ -211,6 +211,66 @@ void runTests(BrowserEngine& engine) {
                    !injectedJs.empty() && injectedJs.find("__darkReaderInjected") != std::string::npos);
     }
 
+    // 15. Built-in DevTools & Live Console Engine
+    {
+        engine.devTools()->logNetworkRequest("https://api.github.com/repos", "GET", 200, "json", 4200, 18.2);
+        auto logs = engine.devTools()->getNetworkLogs();
+        assertTest("DevTools Engine: Live network waterfall logging", logs.size() >= 4);
+
+        std::string jsRes = engine.devTools()->evaluateJs("2 + 2");
+        assertTest("DevTools Engine: Interactive JavaScript console evaluation (2 + 2 == 4)", jsRes == "4");
+    }
+
+    // 16. Encrypted Password Vault & Breach Shield
+    {
+        uint32_t pId = engine.vault()->addEntry("https://bank.com", "myuser", "MyS3cur3!Bank2026");
+        assertTest("Password Vault: Encrypted credential storage", pId > 0);
+
+        std::string genPass = PasswordVault::generateStrongPassword(18, true);
+        assertTest("Password Vault: Crypto-grade password generator (length >= 18)", genPass.length() == 18);
+
+        int strength = PasswordVault::evaluatePasswordStrength(genPass);
+        assertTest("Password Vault: Password strength scoring (strength >= 80)", strength >= 80);
+
+        bool breached = PasswordVault::checkBreachStatus("123456");
+        assertTest("Password Vault: Real-time breach detection for weak credentials", breached);
+    }
+
+    // 17. Smart Tab Groups & Auto-Stacking
+    {
+        uint32_t gId = engine.tabGroups()->createGroup("Research Group", "#4ade80");
+        engine.tabGroups()->addTabToGroup(gId, 1);
+        auto grp = engine.tabGroups()->getGroup(gId);
+        assertTest("Tab Groups: Collapsible group creation and assignment", grp && grp->tabIds.size() == 1);
+
+        engine.tabGroups()->toggleGroupCollapse(gId);
+        grp = engine.tabGroups()->getGroup(gId);
+        assertTest("Tab Groups: Toggle group collapse/expand", grp && grp->isCollapsed == true);
+    }
+
+    // 18. Web Scratchpad & Notes Clipper
+    {
+        uint32_t noteId = engine.scratchpad()->createNote("Meeting Notes", "Discuss Gecko fork roadmap", "https://meeting.org");
+        assertTest("Scratchpad Engine: Create and manage markdown notes", noteId > 0);
+
+        uint32_t clipId = engine.scratchpad()->clipWebSelection("C++20 modules empower fast compiling", "C++ Docs", "https://isocpp.org");
+        assertTest("Scratchpad Engine: Web clipping with automatic source attribution", clipId > 0);
+    }
+
+    // 19. Hardware Limiter (CPU/RAM) & Picture-in-Picture
+    {
+        engine.hardware()->setCpuLimitPercent(50);
+        assertTest("Hardware Limiter: CPU throttle percentage limit (50%)", engine.hardware()->getCpuLimitPercent() == 50);
+
+        engine.hardware()->setRamLimitMb(2048, true);
+        assertTest("Hardware Limiter: Hard RAM limit allocation (2048 MB)", engine.hardware()->getRamLimitMb() == 2048 && engine.hardware()->isHardLimit());
+
+        engine.hardware()->togglePip(true, "Demo Video", "https://video.com/1");
+        engine.hardware()->setPlaybackRate(1.5);
+        auto pip = engine.hardware()->getPipState();
+        assertTest("Floating Media Engine: Picture-in-Picture speed control (1.5x)", pip.isPipActive && pip.playbackRate == 1.5);
+    }
+
     std::cout << "\n\033[1;36mResult: " << passed << " of " << total << " tests passed successfully!\033[0m\n\n";
 }
 

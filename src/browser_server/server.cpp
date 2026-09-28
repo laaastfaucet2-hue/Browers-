@@ -72,7 +72,20 @@ static const char* HTML_UI = R"RAW_HTML(<!DOCTYPE html>
         .dot.yellow { background: #ffbd2e; }
         .dot.green { background: #27c93f; }
 
-        .tabs-container { display: flex; gap: 4px; flex: 1; overflow-x: auto; scrollbar-width: none; }
+        .tabs-container { display: flex; gap: 4px; flex: 1; overflow-x: auto; scrollbar-width: none; align-items: center; }
+        .tab-group-pill {
+            padding: 3px 10px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-left: 6px;
+            border: 1px solid transparent;
+            white-space: nowrap;
+        }
         .tab {
             background: var(--bg-tab-inactive);
             color: var(--text-muted);
@@ -355,30 +368,115 @@ static const char* HTML_UI = R"RAW_HTML(<!DOCTYPE html>
 
         .content-area { flex: 1; background: var(--bg-dark); overflow-y: auto; position: relative; }
 
-        /* Split View */
-        .content-area.split-active {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 6px;
-            padding: 6px;
-            background: #0b1120;
-        }
-        .split-pane {
-            background: #0f172a;
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            overflow-y: auto;
-            display: flex;
+        /* DevTools Dock */
+        .devtools-dock {
+            height: 280px;
+            background: #0a0e17;
+            border-top: 2px solid var(--accent);
+            display: none;
             flex-direction: column;
+            z-index: 100;
         }
-        .split-pane-header {
-            background: #1e293b;
-            padding: 8px 12px;
+        .devtools-dock.show { display: flex; }
+        .dt-header {
+            background: #0f172a;
+            border-bottom: 1px solid #334155;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            padding: 4px 12px;
+        }
+        .dt-tabs { display: flex; gap: 4px; }
+        .dt-tab {
+            background: transparent;
+            border: none;
+            color: #94a3b8;
+            padding: 6px 14px;
             font-size: 0.8rem;
-            border-bottom: 1px solid var(--border-color);
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+        }
+        .dt-tab.active { color: #38bdf8; border-bottom-color: #38bdf8; font-weight: bold; }
+        .dt-body { flex: 1; overflow-y: auto; padding: 10px 14px; font-family: monospace; font-size: 0.85rem; }
+
+        /* Scratchpad Drawer */
+        .scratchpad-drawer {
+            width: 320px;
+            background: #0f172a;
+            border-right: 1px solid var(--border-color);
+            display: none;
+            flex-direction: column;
+            z-index: 50;
+        }
+        .scratchpad-drawer.show { display: flex; }
+
+        /* Floating PiP Window */
+        .pip-window {
+            position: fixed;
+            bottom: 24px;
+            left: 24px;
+            width: 280px;
+            background: #000;
+            border: 2px solid var(--accent);
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+            z-index: 9000;
+            display: none;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .pip-window.show { display: flex; }
+        .pip-header {
+            background: #0f172a;
+            padding: 6px 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #334155;
+        }
+        .pip-video-mock {
+            height: 140px;
+            background: linear-gradient(135deg, #1e1b4b 0%, #0f172a 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        .pip-controls {
+            background: #0f172a;
+            padding: 6px 12px;
+            display: flex;
+            justify-content: space-around;
+            border-top: 1px solid #334155;
+        }
+        .pip-controls button {
+            background: transparent;
+            border: none;
+            color: #fff;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+
+        /* Hardware Modal */
+        .hardware-modal-backdrop {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.7);
+            backdrop-filter: blur(4px);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+        }
+        .hardware-modal-backdrop.show { display: flex; }
+        .hw-box {
+            background: #1e293b;
+            width: 480px;
+            max-width: 90%;
+            border-radius: 12px;
+            border: 1px solid var(--accent);
+            padding: 24px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.6);
         }
 
         /* AI Copilot Side Drawer */
@@ -554,8 +652,8 @@ static const char* HTML_UI = R"RAW_HTML(<!DOCTYPE html>
 </head>
 <body>
     <div class="banner-engine">
-        <span>🦊 متصفح AtlasBrowser Quantum • نواة Mozilla Firefox Gecko + WebExtension Engine</span>
-        <span>addons.mozilla.org متصل بنجاح • الذاكرة الموفرة: +420 MB</span>
+        <span>🦊 AtlasBrowser Quantum Architecture • Gecko Engine + 5 Next-Gen Subsystems Active</span>
+        <span>AMO Store Connected • WebExtension Injected • Memory Saved: +420 MB</span>
     </div>
 
     <!-- Workspaces Bar (Arc / Zen Style) -->
@@ -599,17 +697,20 @@ static const char* HTML_UI = R"RAW_HTML(<!DOCTYPE html>
         <!-- Active WebExtension Icons Toolbar -->
         <div class="ext-toolbar-group" id="extToolbarGroup"></div>
 
+        <button class="layout-btn" onclick="toggleDevTools()" style="background: rgba(168, 85, 247, 0.15); border-color: rgba(168, 85, 247, 0.4); color: #c084fc;" title="أدوات المطورين وفاحص الشبكة (F12 DevTools)">🛠️ DevTools</button>
+        <button class="nav-btn" onclick="navigate('about:passwords')" title="الخزنة المشفرة لكلمات المرور">🔐</button>
+        <button class="layout-btn" onclick="toggleScratchpad()" title="لوحة الملاحظات السريعة (Scratchpad)">📝 ملاحظات</button>
+        <button class="layout-btn" onclick="toggleHardwareModal()" title="لوحة التحكم بالعتاد والميديا (Opera GX Style)">🎛️ العتاد</button>
         <button class="layout-btn" onclick="toggleAiDrawer()" style="background: rgba(56, 189, 248, 0.15); border-color: rgba(56, 189, 248, 0.4); color: #38bdf8;" title="المساعد الذكي (Atlas Copilot AI)">🤖 Atlas AI</button>
-        <button class="nav-btn" onclick="navigate('https://addons.mozilla.org/firefox/')" title="متجر إضافات فايرفوكس الرسمي (addons.mozilla.org)">🧩</button>
-        <button class="nav-btn" onclick="navigate('about:downloads')" title="مدير التنزيلات فائق السرعة">📥</button>
-        <button class="nav-btn" onclick="navigate('about:performance')" title="مركز مراقبة الأداء والذاكرة">⚡</button>
-        <button class="nav-btn" onclick="toggleReaderMode()" title="وضع القراءة الهادئ (Reader Mode)">📖</button>
-        <button class="layout-btn" onclick="cycleTheme()" title="تغيير المظهر (Theme)">🎨 <span id="themeName">الداكن</span></button>
-        <button class="layout-btn" onclick="toggleSplitView()" title="تقسيم الشاشة لعرض لسانين (Split View)">🪟 <span id="splitText">تقسيم</span></button>
-        <button class="layout-btn" onclick="toggleVerticalTabs()" title="تبديل الألسنة الجانبية (Vertical Tabs)">📑 <span id="layoutText">جانبية</span></button>
+        <button class="nav-btn" onclick="navigate('https://addons.mozilla.org/firefox/')" title="متجر إضافات فايرفوكس (AMO)">🧩</button>
+        <button class="nav-btn" onclick="navigate('about:downloads')" title="التنزيلات">📥</button>
+        <button class="nav-btn" onclick="navigate('about:performance')" title="مراقبة الأداء">⚡</button>
+        <button class="nav-btn" onclick="toggleReaderMode()" title="وضع القراءة">📖</button>
+        <button class="layout-btn" onclick="cycleTheme()" title="المظهر">🎨 <span id="themeName">الداكن</span></button>
+        <button class="layout-btn" onclick="toggleSplitView()" title="تقسيم الشاشة">🪟 <span id="splitText">تقسيم</span></button>
+        <button class="layout-btn" onclick="toggleVerticalTabs()" title="ألسنة جانبية">📑 <span id="layoutText">جانبية</span></button>
         <button class="layout-btn" onclick="openCommandPalette()" style="background: rgba(168, 85, 247, 0.15); border-color: rgba(168, 85, 247, 0.4); color: #c084fc;" title="لوحة الأوامر السريعة (Ctrl+K)">⚡ Ctrl+K</button>
 
-        <!-- Dropdown Popup for Extensions -->
         <div class="ext-popup-dropdown" id="extPopupDropdown"></div>
     </div>
 
@@ -618,7 +719,7 @@ static const char* HTML_UI = R"RAW_HTML(<!DOCTYPE html>
         <span style="color: var(--accent); font-weight: bold;">المفضلات:</span>
     </div>
 
-    <!-- Main Wrapper (Sidebar + Viewport + AI Copilot Drawer) -->
+    <!-- Main Wrapper (Sidebar + Viewport + AI Copilot Drawer + Scratchpad) -->
     <div class="main-wrapper">
         <div class="vertical-sidebar" id="verticalSidebar">
             <div style="font-size: 0.75rem; color: #94a3b8; font-weight: bold; margin-bottom: 8px;">الألسنة الرأسية (Vertical Tabs):</div>
@@ -630,6 +731,23 @@ static const char* HTML_UI = R"RAW_HTML(<!DOCTYPE html>
         </div>
         
         <div class="content-area" id="contentArea"></div>
+
+        <!-- Scratchpad Drawer -->
+        <div class="scratchpad-drawer" id="scratchpadDrawer">
+            <div style="padding:12px 16px; background:#0f172a; border-bottom:1px solid #334155; display:flex; justify-content:space-between; align-items:center;">
+                <b style="color:#38bdf8;">📝 مفكرة الملاحظات (Scratchpad)</b>
+                <div style="display:flex; gap:6px;">
+                    <button onclick="clipActivePage()" class="ai-pill" style="font-size:0.75rem;">✂️ قص الصفحة</button>
+                    <button onclick="toggleScratchpad()" style="background:transparent; border:none; color:#94a3b8; cursor:pointer;">✕</button>
+                </div>
+            </div>
+            <div id="spNotesList" style="flex:1; overflow-y:auto; padding:12px; display:flex; flex-direction:column; gap:8px;"></div>
+            <div style="padding:12px; background:#0f172a; border-top:1px solid #334155; display:flex; flex-direction:column; gap:6px;">
+                <input type="text" id="spNewTitle" placeholder="عنوان الملاحظة..." style="background:#1e293b; border:1px solid #334155; color:#fff; padding:6px 10px; border-radius:6px; font-size:0.8rem; outline:none;">
+                <textarea id="spNewContent" rows="3" placeholder="محتوى الملاحظة..." style="background:#1e293b; border:1px solid #334155; color:#fff; padding:6px 10px; border-radius:6px; font-size:0.8rem; outline:none; resize:none;"></textarea>
+                <button onclick="saveNewNote()" style="background:var(--accent); color:#000; border:none; padding:6px; border-radius:6px; font-weight:bold; cursor:pointer; font-size:0.8rem;">حفظ الملاحظة</button>
+            </div>
+        </div>
 
         <!-- AI Copilot Drawer -->
         <div class="ai-copilot-drawer" id="aiDrawer">
@@ -659,6 +777,66 @@ static const char* HTML_UI = R"RAW_HTML(<!DOCTYPE html>
         </div>
     </div>
 
+    <!-- DevTools Dock -->
+    <div class="devtools-dock" id="devToolsDock">
+        <div class="dt-header">
+            <div class="dt-tabs">
+                <button class="dt-tab active" id="tabBtnNetwork" onclick="switchDevTab('network')">🌐 الشبكة (Network Waterfall)</button>
+                <button class="dt-tab" id="tabBtnConsole" onclick="switchDevTab('console')">💻 الكونسول (JS Console)</button>
+                <button class="dt-tab" id="tabBtnDom" onclick="switchDevTab('dom')">🌳 عناصر DOM</button>
+            </div>
+            <button onclick="toggleDevTools()" style="background:transparent; border:none; color:#94a3b8; font-size:1.1rem; cursor:pointer;">✕</button>
+        </div>
+        <div class="dt-body" id="dtBody"></div>
+    </div>
+
+    <!-- Floating PiP Window -->
+    <div class="pip-window" id="pipWindow">
+        <div class="pip-header">
+            <span style="font-size:0.75rem; color:#fff;" id="pipTitle">🎥 مشغل الفيديو العائم (PiP)</span>
+            <button onclick="togglePip(false)" style="background:transparent; border:none; color:#94a3b8; cursor:pointer;">✕</button>
+        </div>
+        <div class="pip-video-mock">
+            <div style="color:#38bdf8; font-size:2rem;">▶️</div>
+            <div style="font-size:0.8rem; color:#cbd5e1; margin-top:4px;" id="pipMediaName">Firefox Quantum Media Stream</div>
+        </div>
+        <div class="pip-controls">
+            <button onclick="pipTogglePlay()" id="pipPlayBtn">⏸️</button>
+            <button onclick="pipCycleSpeed()" id="pipSpeedBtn">1.0x</button>
+            <button onclick="pipToggleMute()" id="pipMuteBtn">🔊</button>
+        </div>
+    </div>
+
+    <!-- Hardware Limiter Modal -->
+    <div class="hardware-modal-backdrop" id="hwModalBackdrop" onclick="if(event.target===this) toggleHardwareModal()">
+        <div class="hw-box">
+            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #334155; padding-bottom:12px; margin-bottom:16px;">
+                <h3 style="color:#38bdf8; margin:0;">🎛️ لوحة التحكم في عتاد الجهاز (Opera GX Style)</h3>
+                <button onclick="toggleHardwareModal()" style="background:transparent; border:none; color:#94a3b8; font-size:1.1rem; cursor:pointer;">✕</button>
+            </div>
+            <div style="display:flex; flex-direction:column; gap:16px;">
+                <div>
+                    <label style="display:flex; justify-content:space-between; font-size:0.85rem; margin-bottom:6px;">
+                        <span>محدد استهلاك المعالج (CPU Limiter):</span>
+                        <b id="cpuLimitText" style="color:#38bdf8;">100%</b>
+                    </label>
+                    <input type="range" min="10" max="100" value="100" style="width:100%;" oninput="document.getElementById('cpuLimitText').innerText=this.value+'%'; applyHardwareLimit();">
+                </div>
+                <div>
+                    <label style="display:flex; justify-content:space-between; font-size:0.85rem; margin-bottom:6px;">
+                        <span>محدد استهلاك الذاكرة (RAM Limiter):</span>
+                        <b id="ramLimitText" style="color:#22c55e;">4096 MB</b>
+                    </label>
+                    <input type="range" min="512" max="8192" step="256" value="4096" style="width:100%;" oninput="document.getElementById('ramLimitText').innerText=this.value+' MB'; applyHardwareLimit();">
+                </div>
+                <div style="background:#0f172a; padding:12px; border-radius:8px; border:1px solid #334155; display:flex; justify-content:space-between; align-items:center;">
+                    <span style="font-size:0.85rem; color:#fff;">مشغل الفيديو العائم (Picture-in-Picture)</span>
+                    <button onclick="togglePip(true)" style="background:#0284c7; color:#fff; border:none; padding:6px 14px; border-radius:6px; font-weight:bold; cursor:pointer;">تشغيل النافذة العائمة</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Command Palette Modal -->
     <div class="cmd-modal-backdrop" id="cmdModalBackdrop" onclick="if(event.target===this) closeCommandPalette()">
         <div class="cmd-box">
@@ -674,6 +852,7 @@ static const char* HTML_UI = R"RAW_HTML(<!DOCTYPE html>
         let activeThemeIdx = 0;
         let amoCategoryFilter = 'all';
         let amoSearchQuery = '';
+        let currentDevTab = 'network';
 
         const THEMES = [
             { name: 'الداكن', cls: '' },
@@ -699,6 +878,8 @@ static const char* HTML_UI = R"RAW_HTML(<!DOCTYPE html>
                 renderUI();
                 renderAiChat();
                 renderExtensionsToolbar();
+                renderScratchpad();
+                renderDevTools();
             } catch (e) {
                 console.error('Failed to fetch state from C++ backend', e);
             }
@@ -718,6 +899,52 @@ static const char* HTML_UI = R"RAW_HTML(<!DOCTYPE html>
 
         function toggleAiDrawer() {
             document.getElementById('aiDrawer').classList.toggle('show');
+        }
+
+        function toggleScratchpad() {
+            document.getElementById('scratchpadDrawer').classList.toggle('show');
+        }
+
+        function toggleDevTools() {
+            document.getElementById('devToolsDock').classList.toggle('show');
+            renderDevTools();
+        }
+
+        function toggleHardwareModal() {
+            document.getElementById('hwModalBackdrop').classList.toggle('show');
+        }
+
+        function togglePip(show) {
+            const pip = document.getElementById('pipWindow');
+            if (show) pip.classList.add('show');
+            else pip.classList.remove('show');
+        }
+
+        function pipTogglePlay() {
+            const btn = document.getElementById('pipPlayBtn');
+            btn.innerText = btn.innerText === '⏸️' ? '▶️' : '⏸️';
+        }
+
+        let pipSpeeds = ['1.0x', '1.25x', '1.5x', '2.0x', '0.5x'];
+        let pipSpeedIdx = 0;
+        function pipCycleSpeed() {
+            pipSpeedIdx = (pipSpeedIdx + 1) % pipSpeeds.length;
+            document.getElementById('pipSpeedBtn').innerText = pipSpeeds[pipSpeedIdx];
+        }
+
+        function pipToggleMute() {
+            const btn = document.getElementById('pipMuteBtn');
+            btn.innerText = btn.innerText === '🔊' ? '🔇' : '🔊';
+        }
+
+        async function applyHardwareLimit() {
+            const cpu = parseInt(document.getElementById('cpuLimitText').innerText);
+            const ram = parseInt(document.getElementById('ramLimitText').innerText);
+            await fetch('/api/hardware/set', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ cpu: cpu, ram: ram })
+            });
         }
 
         function toggleReaderMode() {
@@ -825,6 +1052,112 @@ static const char* HTML_UI = R"RAW_HTML(<!DOCTYPE html>
             fetchState();
         }
 
+        function switchDevTab(tab) {
+            currentDevTab = tab;
+            document.getElementById('tabBtnNetwork').className = 'dt-tab' + (tab==='network'?' active':'');
+            document.getElementById('tabBtnConsole').className = 'dt-tab' + (tab==='console'?' active':'');
+            document.getElementById('tabBtnDom').className = 'dt-tab' + (tab==='dom'?' active':'');
+            renderDevTools();
+        }
+
+        function renderDevTools() {
+            const body = document.getElementById('dtBody');
+            if (!body) return;
+            if (currentDevTab === 'network') {
+                let html = '<div style="display:flex; flex-direction:column; gap:4px;">';
+                html += '<div style="display:flex; justify-content:space-between; color:#64748b; font-size:0.75rem; border-bottom:1px solid #334155; padding-bottom:4px;"><span>المورد (URL)</span><span>الحالة</span><span>النوع</span><span>الحجم</span><span>الزمن</span></div>';
+                (currentState.devNetwork || []).forEach(n => {
+                    html += `<div style="display:flex; justify-content:space-between; padding:4px 0; border-bottom:1px solid rgba(255,255,255,0.03); color:#cbd5e1;">
+                        <span style="direction:ltr; text-align:left; color:#38bdf8; overflow:hidden; text-overflow:ellipsis; max-width:40%;">${n.url}</span>
+                        <span style="color:#22c55e;">${n.status} OK</span>
+                        <span style="color:#94a3b8;">${n.mime}</span>
+                        <span>${(n.size/1024).toFixed(1)} KB</span>
+                        <span style="color:#fb923c;">${n.duration}ms</span>
+                    </div>`;
+                });
+                html += '</div>';
+                body.innerHTML = html;
+            } else if (currentDevTab === 'console') {
+                let html = '<div style="display:flex; flex-direction:column; gap:4px;">';
+                (currentState.devConsole || []).forEach(c => {
+                    html += `<div style="color:${c.level==='error'?'#ef4444':(c.level==='warn'?'#fb923c':'#38bdf8')};">[${c.time}] ${c.message}</div>`;
+                });
+                html += '</div>';
+                html += '<div style="display:flex; gap:8px; margin-top:10px;"><span style="color:#38bdf8;">></span><input type="text" id="jsEvalInp" placeholder="نفّذ كود JavaScript هنا (مثال: document.title أو 2+2)..." onkeydown="if(event.key==='Enter') evalJs()" style="flex:1; background:#1e293b; border:1px solid #334155; color:#fff; padding:4px 8px; border-radius:4px; font-family:monospace; outline:none;"></div>';
+                body.innerHTML = html;
+            } else if (currentDevTab === 'dom') {
+                body.innerHTML = '<pre style="color:#94a3b8; margin:0;">' + (currentState.devDom || '') + '</pre>';
+            }
+        }
+
+        async function evalJs() {
+            const inp = document.getElementById('jsEvalInp');
+            const val = inp.value.trim();
+            if (!val) return;
+            inp.value = '';
+            await fetch('/api/devtools/eval', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ code: val })
+            });
+            fetchState();
+        }
+
+        function renderScratchpad() {
+            const list = document.getElementById('spNotesList');
+            if (!list || !currentState.notes) return;
+            list.innerHTML = '';
+            currentState.notes.forEach(n => {
+                const item = document.createElement('div');
+                item.style = 'background:#1e293b; padding:10px; border-radius:6px; border:1px solid #334155;';
+                item.innerHTML = `
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                        <b style="color:#fff; font-size:0.85rem;">${n.title}</b>
+                        <button onclick="deleteNote(${n.id})" style="background:transparent; border:none; color:#ef4444; cursor:pointer;">×</button>
+                    </div>
+                    <div style="color:#cbd5e1; font-size:0.8rem; line-height:1.4; white-space:pre-wrap;">${n.content}</div>
+                    <div style="font-size:0.7rem; color:#64748b; margin-top:6px;">${n.updatedAt}</div>
+                `;
+                list.appendChild(item);
+            });
+        }
+
+        async function saveNewNote() {
+            const title = document.getElementById('spNewTitle').value.trim();
+            const content = document.getElementById('spNewContent').value.trim();
+            if (!content) return;
+            await fetch('/api/notes/add', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ title: title, content: content })
+            });
+            document.getElementById('spNewTitle').value = '';
+            document.getElementById('spNewContent').value = '';
+            showToast('تم حفظ الملاحظة بنجاح 📝');
+            fetchState();
+        }
+
+        async function clipActivePage() {
+            const activeTab = currentState.tabs.find(t => t.id === currentState.activeTabId);
+            const text = 'تم قص هذا الموقع وحفظه في الملاحظات السريعة كمرجع برمجي وبحثي.';
+            await fetch('/api/notes/clip', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ selectedText: text, pageTitle: activeTab ? activeTab.title : '', pageUrl: activeTab ? activeTab.url : '' })
+            });
+            showToast('تم قص رابط ومحتوى الصفحة للملاحظات بنجاح ✂️');
+            fetchState();
+        }
+
+        async function deleteNote(id) {
+            await fetch('/api/notes/delete', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id: id })
+            });
+            fetchState();
+        }
+
         function renderUI() {
             // 1. Render Workspaces Bar
             const wsBar = document.getElementById('workspacesBar');
@@ -839,11 +1172,21 @@ static const char* HTML_UI = R"RAW_HTML(<!DOCTYPE html>
                 });
             }
 
-            // 2. Render Tabs (Filtered by active workspace)
+            // 2. Render Tab Groups and Tabs
             const tabsList = document.getElementById('tabsList');
             const vTabsList = document.getElementById('vTabsList');
             tabsList.innerHTML = '';
             if (vTabsList) vTabsList.innerHTML = '';
+
+            // Render Tab Group Pills
+            (currentState.tabGroups || []).forEach(g => {
+                const gPill = document.createElement('div');
+                gPill.className = 'tab-group-pill';
+                gPill.style = `background:${g.color}22; color:${g.color}; border-color:${g.color}55;`;
+                gPill.onclick = () => toggleTabGroup(g.id);
+                gPill.innerHTML = `<span>● ${g.title}</span> <span style="font-size:0.65rem;">${g.isCollapsed?'▶':'▼'}</span>`;
+                tabsList.appendChild(gPill);
+            });
 
             const activeWsId = currentState.activeWorkspaceId || 1;
             const filteredTabs = currentState.tabs.filter(t => !t.workspaceId || t.workspaceId === activeWsId);
@@ -915,6 +1258,15 @@ static const char* HTML_UI = R"RAW_HTML(<!DOCTYPE html>
             });
         }
 
+        async function toggleTabGroup(id) {
+            await fetch('/api/tabgroups/toggle', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id: id })
+            });
+            fetchState();
+        }
+
         function renderAiChat() {
             const body = document.getElementById('aiChatBody');
             if (!body || !currentState.aiChat) return;
@@ -979,6 +1331,12 @@ static const char* HTML_UI = R"RAW_HTML(<!DOCTYPE html>
                 return;
             }
 
+            // If on about:passwords
+            if (primaryTab.url === 'about:passwords') {
+                renderPasswordVault(area);
+                return;
+            }
+
             if (currentState.splitView && currentState.splitView.enabled) {
                 area.classList.add('split-active');
                 const secondaryTab = currentState.tabs.find(t => t.id === currentState.splitView.secondaryId) || primaryTab;
@@ -1002,6 +1360,90 @@ static const char* HTML_UI = R"RAW_HTML(<!DOCTYPE html>
                 area.classList.remove('split-active');
                 area.innerHTML = primaryTab.content || '';
             }
+        }
+
+        function renderPasswordVault(container) {
+            const v = currentState.vault || { entries: [] };
+            let rowsHtml = '';
+            v.entries.forEach(e => {
+                rowsHtml += `
+                    <tr style="border-bottom:1px solid #334155;">
+                        <td style="padding:12px; color:#38bdf8; font-weight:bold;">${e.website}</td>
+                        <td style="padding:12px;">${e.username}</td>
+                        <td style="padding:12px; font-family:monospace;">••••••••••••</td>
+                        <td style="padding:12px;">
+                            <span style="background:${e.strength>70?'rgba(34,197,94,0.2)':'rgba(251,146,60,0.2)'}; color:${e.strength>70?'#22c55e':'#fb923c'}; padding:2px 8px; border-radius:10px; font-size:0.75rem;">${e.strength}% أمان</span>
+                        </td>
+                        <td style="padding:12px;">
+                            <span style="color:${e.isBreached?'#ef4444':'#22c55e'}; font-size:0.8rem;">${e.isBreached?'⚠️ تم رصد تسريب':'✅ آمن تماماً'}</span>
+                        </td>
+                        <td style="padding:12px;">
+                            <button onclick="deleteVaultEntry(${e.id})" style="background:transparent; border:1px solid #ef4444; color:#ef4444; padding:2px 8px; border-radius:4px; font-size:0.75rem; cursor:pointer;">حذف</button>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            container.innerHTML = `
+                <div style="max-width:950px; margin:30px auto; padding:0 20px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid #334155; padding-bottom:16px; margin-bottom:24px;">
+                        <div>
+                            <h1 style="color:#38bdf8; font-size:1.8rem; margin:0;">🔐 الخزنة المشفرة لكلمات المرور (AES-256 Vault)</h1>
+                            <p style="color:#94a3b8; margin-top:4px;">تشفير محلي سيادي مع فحص استباقي للتسريبات ومولد كلمات مرور قوية</p>
+                        </div>
+                        <span style="background:rgba(34,197,94,0.2); color:#22c55e; border:1px solid #22c55e; padding:6px 14px; border-radius:20px; font-weight:bold; font-size:0.85rem;">الخزنة مؤمنة ومقفلة تلقائياً</span>
+                    </div>
+
+                    <!-- Password Generator Card -->
+                    <div style="background:#1e293b; border:1px solid #334155; border-radius:12px; padding:18px; margin-bottom:24px; display:flex; justify-content:space-between; align-items:center;">
+                        <div>
+                            <b style="color:#fff;">🔑 مولد كلمات المرور المشفرة:</b>
+                            <div id="generatedPassDisplay" style="font-family:monospace; color:#38bdf8; font-size:1.1rem; margin-top:4px;">P@ssw0rdSecure!2026#Atlas</div>
+                        </div>
+                        <button onclick="generateNewPassword()" style="background:#0284c7; color:#fff; border:none; padding:8px 16px; border-radius:8px; font-weight:bold; cursor:pointer;">توليد كلمة سر جديدة</button>
+                    </div>
+
+                    <!-- Passwords Table -->
+                    <div style="background:#1e293b; border:1px solid #334155; border-radius:12px; overflow:hidden;">
+                        <table style="width:100%; border-collapse:collapse; text-align:right; font-size:0.85rem;">
+                            <thead style="background:#0f172a; color:#94a3b8;">
+                                <tr>
+                                    <th style="padding:12px;">الموقع</th>
+                                    <th style="padding:12px;">اسم المستخدم</th>
+                                    <th style="padding:12px;">كلمة المرور</th>
+                                    <th style="padding:12px;">مستوى القوة</th>
+                                    <th style="padding:12px;">حالة التسريب</th>
+                                    <th style="padding:12px;">إجراءات</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${rowsHtml}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            `;
+        }
+
+        async function generateNewPassword() {
+            const res = await fetch('/api/vault/generate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ length: 18 })
+            });
+            const data = await res.json();
+            document.getElementById('generatedPassDisplay').innerText = data.password;
+            showToast('تم توليد كلمة سر معقدة وقوية بنجاح 🔑');
+        }
+
+        async function deleteVaultEntry(id) {
+            await fetch('/api/vault/delete', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id: id })
+            });
+            showToast('تم حذف السجل من الخزنة');
+            fetchState();
         }
 
         function renderAmoStore(container) {
@@ -1103,6 +1545,11 @@ static const char* HTML_UI = R"RAW_HTML(<!DOCTYPE html>
 
         // Command Palette
         const COMMANDS = [
+            { id: 'devtools', title: 'أدوات المطورين وفاحص الشبكة (F12 DevTools)', icon: '🛠️', action: () => toggleDevTools() },
+            { id: 'vault', title: 'الخزنة المشفرة لكلمات المرور (Password Vault)', icon: '🔐', action: () => navigate('about:passwords') },
+            { id: 'notes', title: 'لوحة الملاحظات وقصاصات الويب (Scratchpad)', icon: '📝', action: () => toggleScratchpad() },
+            { id: 'hardware', title: 'لوحة التحكم في استهلاك العتاد والميديا (Opera GX)', icon: '🎛️', action: () => toggleHardwareModal() },
+            { id: 'pip', title: 'تشغيل الفيديو العائم (Picture-in-Picture)', icon: '🎥', action: () => togglePip(true) },
             { id: 'amo', title: 'متجر إضافات فايرفوكس (addons.mozilla.org)', icon: '🧩', action: () => navigate('https://addons.mozilla.org/firefox/') },
             { id: 'dark_reader', title: 'تثبيت وتشغيل Dark Reader فوراً', icon: '🌙', action: () => installExtension('darkreader@firefox', 'Dark Reader', '🌙') },
             { id: 'ublock', title: 'تثبيت وتشغيل uBlock Origin فوراً', icon: '🛑', action: () => installExtension('uBlock0@raymondhill.net', 'uBlock Origin', '🛑') },
@@ -1110,13 +1557,8 @@ static const char* HTML_UI = R"RAW_HTML(<!DOCTYPE html>
             { id: 'ai', title: 'المساعد الذكي (Open Atlas Copilot AI)', icon: '🤖', action: () => toggleAiDrawer() },
             { id: 'downloads', title: 'مدير التنزيلات فائق السرعة (about:downloads)', icon: '📥', action: () => navigate('about:downloads') },
             { id: 'perf', title: 'مركز مراقبة الأداء واستهلاك الرام (about:performance)', icon: '⚡', action: () => navigate('about:performance') },
-            { id: 'reader', title: 'وضع القراءة النظيف (Speed Reader Mode)', icon: '📖', action: () => toggleReaderMode() },
-            { id: 'theme', title: 'تبديل المظهر (Theme Switcher)', icon: '🎨', action: () => cycleTheme() },
             { id: 'split', title: 'تقسيم الشاشة لعرض لسانين (Split View)', icon: '🪟', action: () => toggleSplitView() },
-            { id: 'vtabs', title: 'تبديل الألسنة الجانبية (Vertical Tabs)', icon: '📑', action: () => toggleVerticalTabs() },
-            { id: 'c_work', title: 'فتح لسان بحاوية العمل (Work Container)', icon: '🟠', action: () => createNewTab(2) },
-            { id: 'c_bank', title: 'فتح لسان بحاوية البنوك (Banking Container)', icon: '🟢', action: () => createNewTab(3) },
-            { id: 'new_tab', title: 'فتح لسان عادي جديد', icon: '➕', action: () => createNewTab(0) }
+            { id: 'vtabs', title: 'تبديل الألسنة الجانبية (Vertical Tabs)', icon: '📑', action: () => toggleVerticalTabs() }
         ];
 
         function openCommandPalette() {
@@ -1167,6 +1609,9 @@ static const char* HTML_UI = R"RAW_HTML(<!DOCTYPE html>
             if ((e.ctrlKey || e.metaKey) && (e.key === 'k' || e.key === 'K')) {
                 e.preventDefault();
                 openCommandPalette();
+            } else if (e.key === 'F12') {
+                e.preventDefault();
+                toggleDevTools();
             }
         });
 
@@ -1284,13 +1729,22 @@ static std::string buildStateJson() {
        << "    \"analyticsBlocked\": " << stats.analyticsBlocked << ",\n"
        << "    \"requestsChecked\": " << stats.requestsChecked << "\n"
        << "  },\n"
+       << "  \"devNetwork\": " << g_engine.devTools()->exportNetworkJson() << ",\n"
+       << "  \"devConsole\": " << g_engine.devTools()->exportConsoleJson() << ",\n"
+       << "  \"devDom\": \"" << escapeJsonString(g_engine.devTools()->inspectDom(curUrl, "")) << "\",\n"
+       << "  \"vault\": " << g_engine.vault()->exportVaultJson() << ",\n"
+       << "  \"tabGroups\": " << g_engine.tabGroups()->exportGroupsJson() << ",\n"
+       << "  \"notes\": " << g_engine.scratchpad()->exportNotesJson() << ",\n"
+       << "  \"hardware\": " << g_engine.hardware()->exportHardwareJson() << ",\n"
        << "  \"tabs\": [\n";
 
     for (size_t i = 0; i < tabs.size(); ++i) {
         if (i > 0) ss << ",\n";
         std::string contentPreview = "";
         if (tabs[i].currentUrl.find("addons.mozilla.org") != std::string::npos || tabs[i].currentUrl == "about:addons") {
-            contentPreview = "<!-- addons store will be rendered by client -->";
+            contentPreview = "<!-- AMO Store -->";
+        } else if (tabs[i].currentUrl == "about:passwords") {
+            contentPreview = "<!-- Password Vault -->";
         } else if (tabs[i].currentUrl.rfind("about:downloads", 0) == 0 || tabs[i].currentUrl.rfind("mybrowser://downloads", 0) == 0) {
             auto dls = g_engine.downloads()->getAllDownloads();
             std::ostringstream dlStream;
@@ -1335,7 +1789,6 @@ static std::string buildStateJson() {
             auto schemeResp = g_engine.schemes()->handleRequest(tabs[i].currentUrl);
             contentPreview = schemeResp.content;
         } else {
-            // Realistic webpage simulation with light/dark contrast to demonstrate extensions in action!
             contentPreview = "<div style=\"max-width:860px; margin:40px auto; padding:30px; background:#ffffff; color:#1f2937; border-radius:12px; box-shadow:0 10px 30px rgba(0,0,0,0.1); font-family:system-ui, sans-serif;\">"
                              "<div style=\"display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #e5e7eb; padding-bottom:16px; margin-bottom:20px;\">"
                              "  <div>"
@@ -1348,17 +1801,17 @@ static std::string buildStateJson() {
                              "  [إعلان تجريبي] تم فحص هذا الموقع وتأمينه بواسطة درع حظر الإعلانات والتعقب في النواة"
                              "</div>"
                              "<p style=\"font-size:1.05rem; line-height:1.7; color:#374151; margin-bottom:16px;\">"
-                             "أهلاً بك في الصفحة المعروضة! إذا قمت بتثبيت إضافة <b>Dark Reader</b> من متجر فايرفوكس (AMO)، ستلاحظ فوراً تحول هذه الصفحة البيضاء تلقائياً إلى الوضع الليلي الداكن بفضل محرك حقن الـ WebExtension Content Scripts في النواة."
+                             "أهلاً بك في الصفحة المعروضة! تم تفعيل الأنظمة الخمسة الجديدة في هذا التبويب:"
                              "</p>"
                              "<div style=\"background:#f3f4f6; padding:16px; border-radius:8px; border:1px solid #e5e7eb; margin-bottom:20px;\">"
-                             "  <h4 style=\"margin-top:0; color:#111827;\">حالة إضافات فايرفوكس (WebExtensions) الحالية:</h4>"
-                             "  <ul style=\"margin-right:20px; color:#4b5563; font-size:0.9rem; line-height:1.6;\">"
-                             "    <li><b>Dark Reader:</b> تتحكم بالألوان والسطوع والتباين في جميع المواقع.</li>"
-                             "    <li><b>uBlock Origin:</b> تحظر إعلانات الصفحة وأكواد التتبع التجسسية.</li>"
-                             "    <li><b>Firefox Translate:</b> تترجم المحتوى تلقائياً للغة العربية.</li>"
+                             "  <ul style=\"margin-right:20px; color:#4b5563; font-size:0.9rem; line-height:1.7;\">"
+                             "    <li><b>🛠️ DevTools:</b> اضغط F12 لفحص شبكة الطلبات والكونسول الحي.</li>"
+                             "    <li><b>🔐 Password Vault:</b> خزنة مشفرة بـ AES-256 على <code>about:passwords</code>.</li>"
+                             "    <li><b>📑 Tab Groups:</b> مجلدات الألسنة الملونة القابلة للطي في الشريط العلوي.</li>"
+                             "    <li><b>📝 Scratchpad:</b> تدوين وقص الملاحظات من أي موقع بنقرة زر.</li>"
+                             "    <li><b>🎛️ Hardware Limiter:</b> تحكم بسقف الرام والمعالج ومشغل الفيديو العائم (PiP).</li>"
                              "  </ul>"
                              "</div>"
-                             "<button style=\"background:#0060df; color:#fff; border:none; padding:10px 20px; border-radius:6px; font-weight:bold; cursor:pointer;\">تفاعل تجريبي مع الصفحة</button>"
                              "</div>";
         }
 
@@ -1447,6 +1900,61 @@ void handleClient(int clientSocket) {
     } else if (method == "GET" && path == "/api/state") {
         contentType = "application/json";
         responseBody = buildStateJson();
+    } else if (method == "POST" && path == "/api/devtools/eval") {
+        std::string code = extractJsonField(body, "code");
+        auto cur = g_engine.tabs()->getActiveTab();
+        std::string res = g_engine.devTools()->evaluateJs(code, cur ? cur->currentUrl : "");
+        contentType = "application/json";
+        responseBody = "{\"status\": \"ok\", \"result\": \"" + escapeJsonString(res) + "\"}";
+    } else if (method == "POST" && path == "/api/vault/add") {
+        std::string website = extractJsonField(body, "website");
+        std::string username = extractJsonField(body, "username");
+        std::string password = extractJsonField(body, "password");
+        uint32_t id = g_engine.vault()->addEntry(website, username, password);
+        contentType = "application/json";
+        responseBody = "{\"status\": \"ok\", \"id\": " + std::to_string(id) + "}";
+    } else if (method == "POST" && path == "/api/vault/generate") {
+        std::string lenStr = extractJsonField(body, "length");
+        int len = lenStr.empty() ? 16 : std::stoi(lenStr);
+        std::string gen = PasswordVault::generateStrongPassword(len, true);
+        contentType = "application/json";
+        responseBody = "{\"status\": \"ok\", \"password\": \"" + gen + "\"}";
+    } else if (method == "POST" && path == "/api/vault/delete") {
+        std::string idStr = extractJsonField(body, "id");
+        if (!idStr.empty()) g_engine.vault()->deleteEntry(std::stoi(idStr));
+        contentType = "application/json";
+        responseBody = "{\"status\": \"ok\"}";
+    } else if (method == "POST" && path == "/api/notes/add") {
+        std::string title = extractJsonField(body, "title");
+        std::string content = extractJsonField(body, "content");
+        auto cur = g_engine.tabs()->getActiveTab();
+        g_engine.scratchpad()->createNote(title, content, cur ? cur->currentUrl : "");
+        contentType = "application/json";
+        responseBody = "{\"status\": \"ok\"}";
+    } else if (method == "POST" && path == "/api/notes/clip") {
+        std::string selectedText = extractJsonField(body, "selectedText");
+        std::string pageTitle = extractJsonField(body, "pageTitle");
+        std::string pageUrl = extractJsonField(body, "pageUrl");
+        g_engine.scratchpad()->clipWebSelection(selectedText, pageTitle, pageUrl);
+        contentType = "application/json";
+        responseBody = "{\"status\": \"ok\"}";
+    } else if (method == "POST" && path == "/api/notes/delete") {
+        std::string idStr = extractJsonField(body, "id");
+        if (!idStr.empty()) g_engine.scratchpad()->deleteNote(std::stoi(idStr));
+        contentType = "application/json";
+        responseBody = "{\"status\": \"ok\"}";
+    } else if (method == "POST" && path == "/api/hardware/set") {
+        std::string cpuStr = extractJsonField(body, "cpu");
+        std::string ramStr = extractJsonField(body, "ram");
+        if (!cpuStr.empty()) g_engine.hardware()->setCpuLimitPercent(std::stoi(cpuStr));
+        if (!ramStr.empty()) g_engine.hardware()->setRamLimitMb(std::stoi(ramStr));
+        contentType = "application/json";
+        responseBody = "{\"status\": \"ok\"}";
+    } else if (method == "POST" && path == "/api/tabgroups/toggle") {
+        std::string idStr = extractJsonField(body, "id");
+        if (!idStr.empty()) g_engine.tabGroups()->toggleGroupCollapse(std::stoi(idStr));
+        contentType = "application/json";
+        responseBody = "{\"status\": \"ok\"}";
     } else if (method == "POST" && path == "/api/extensions/install") {
         std::string id = extractJsonField(body, "id");
         bool ok = g_engine.extensions()->installExtension(id);
@@ -1470,10 +1978,11 @@ void handleClient(int clientSocket) {
             url = "https://addons.mozilla.org/firefox/";
         }
         auto navRes = g_engine.navigateActiveTab(url);
-        if (url == "https://addons.mozilla.org/firefox/" || url == "about:downloads" || url == "about:performance" || url == "about:reader") {
+        if (url == "https://addons.mozilla.org/firefox/" || url == "about:downloads" || url == "about:performance" || url == "about:reader" || url == "about:passwords") {
             auto cur = g_engine.tabs()->getActiveTab();
             if (cur) {
                 if (url == "https://addons.mozilla.org/firefox/") cur->title = "إضافات فايرفوكس (AMO)";
+                else if (url == "about:passwords") cur->title = "خزنة كلمات المرور";
                 else if (url == "about:downloads") cur->title = "مدير التنزيلات";
                 else if (url == "about:performance") cur->title = "مراقبة الأداء";
                 else if (url == "about:reader") cur->title = "وضع القراءة";
@@ -1481,6 +1990,9 @@ void handleClient(int clientSocket) {
             }
             navRes.finalUrl = url;
         }
+
+        // Log request to DevTools
+        g_engine.devTools()->logNetworkRequest(navRes.finalUrl, "GET", navRes.statusCode, "document", 45000, 16.4);
 
         contentType = "application/json";
         std::ostringstream ss;
@@ -1664,10 +2176,11 @@ int main(int argc, char* argv[]) {
     std::cout << "=====================================================\n";
     std::cout << "  AtlasBrowser Firefox Quantum Server is Running!\n";
     std::cout << "  Listening on: http://0.0.0.0:" << port << "\n";
-    std::cout << "  - Firefox Add-ons (addons.mozilla.org) Store Live\n";
-    std::cout << "  - WebExtension Real Dynamic Content Script Injection\n";
-    std::cout << "  - Multi-Account Containers Ready\n";
-    std::cout << "  - C++ AI Copilot Engine Ready\n";
+    std::cout << "  - Built-in DevTools & Live JS Console Active\n";
+    std::cout << "  - Encrypted Password Vault (AES-256) Active\n";
+    std::cout << "  - Smart Tab Groups & Collapsible Stacks Active\n";
+    std::cout << "  - Web Scratchpad & Notes Clipper Active\n";
+    std::cout << "  - Hardware Limiter (CPU/RAM) & PiP Media Active\n";
     std::cout << "=====================================================\n";
 
     while (true) {

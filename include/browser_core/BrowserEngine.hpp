@@ -16,6 +16,11 @@
 #include "PerformanceMonitor.hpp"
 #include "ReaderModeEngine.hpp"
 #include "ExtensionRuntime.hpp"
+#include "DevToolsEngine.hpp"
+#include "PasswordVault.hpp"
+#include "TabGroupManager.hpp"
+#include "ScratchpadEngine.hpp"
+#include "HardwareLimiter.hpp"
 #include <memory>
 #include <string>
 
@@ -57,6 +62,11 @@ public:
     std::shared_ptr<DownloadManager> downloads() const { return m_downloadManager; }
     std::shared_ptr<PerformanceMonitor> performance() const { return m_perfMonitor; }
     std::shared_ptr<ExtensionRuntime> extensions() const { return m_extensionRuntime; }
+    std::shared_ptr<DevToolsEngine> devTools() const { return m_devToolsEngine; }
+    std::shared_ptr<PasswordVault> vault() const { return m_passwordVault; }
+    std::shared_ptr<TabGroupManager> tabGroups() const { return m_tabGroupManager; }
+    std::shared_ptr<ScratchpadEngine> scratchpad() const { return m_scratchpadEngine; }
+    std::shared_ptr<HardwareLimiter> hardware() const { return m_hardwareLimiter; }
     std::shared_ptr<AdBlocker> adBlocker() const { return m_adBlocker; }
     std::shared_ptr<NetworkInterceptor> network() const { return m_networkInterceptor; }
     std::shared_ptr<SchemeHandlerRegistry> schemes() const { return m_schemeRegistry; }
@@ -89,6 +99,11 @@ private:
     std::shared_ptr<DownloadManager> m_downloadManager;
     std::shared_ptr<PerformanceMonitor> m_perfMonitor;
     std::shared_ptr<ExtensionRuntime> m_extensionRuntime;
+    std::shared_ptr<DevToolsEngine> m_devToolsEngine;
+    std::shared_ptr<PasswordVault> m_passwordVault;
+    std::shared_ptr<TabGroupManager> m_tabGroupManager;
+    std::shared_ptr<ScratchpadEngine> m_scratchpadEngine;
+    std::shared_ptr<HardwareLimiter> m_hardwareLimiter;
     bool m_initialized = false;
 };
 

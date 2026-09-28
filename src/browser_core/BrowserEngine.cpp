@@ -26,6 +26,11 @@ void BrowserEngine::initialize() {
     m_downloadManager = std::make_shared<DownloadManager>();
     m_perfMonitor = std::make_shared<PerformanceMonitor>();
     m_extensionRuntime = std::make_shared<ExtensionRuntime>();
+    m_devToolsEngine = std::make_shared<DevToolsEngine>();
+    m_passwordVault = std::make_shared<PasswordVault>();
+    m_tabGroupManager = std::make_shared<TabGroupManager>();
+    m_scratchpadEngine = std::make_shared<ScratchpadEngine>();
+    m_hardwareLimiter = std::make_shared<HardwareLimiter>();
 
     setupInternalSchemes();
     setupJsBridgeApis();
